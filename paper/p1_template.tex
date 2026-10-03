@@ -1,0 +1,562 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[round]{natbib}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue]{hyperref}
+\usepackage{parskip}
+\usepackage{caption}
+
+\newtheorem{proposition}{Proposition}
+\newcommand{\E}{\mathbb{E}}
+\setlength{\emergencystretch}{1.5em}
+
+\title{\textbf{What the Hasbrouck VAR Measures on Five-Minute Bars}\\[0.4em]
+\large Construction Identities in Order-Flow Regressions on OHLCV Data}
+\author{Khanh Nguyen}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent The vector autoregression of \citet{hasbrouck1991} is the standard tool for measuring how much
+information trades carry. It needs signed trades, which are expensive; OHLCV bars are free, so it is
+tempting to run the same regressions on bars, with the bar's direction $\operatorname{sign}(C_t-O_t)$ as
+the trade sign. We do this for @@nstocks@@ S\&P~500 stocks on 5-minute bars, 2019--2025. The estimates
+look like textbook evidence of information in trades: contemporaneous impact is significant in every
+stock with median $t$-statistics above 100, and with the range midpoint $(H+L)/2$ as the price, impact
+also carries into the next bar in every stock. We show that both results are arithmetic. With the
+close as the price, the contemporaneous coefficient equals the mean absolute open-to-close return
+divided by the variance of the sign; a formula that uses no regression predicts it to within one
+percent. With the midpoint as the price, the next bar's return contains a term that is already fixed
+when the current bar closes, and that term is correlated @@corr_x_cl@@ with the bar's direction; one
+control variable removes @@b1_removed@@ of the lagged coefficient. We also prove that the common two-step
+forecast built on this VAR is not identified. The paper ends with a short test that separates identity
+from information in any bar-level regression.
+\end{abstract}
+
+%=====================================================================
+\section{Introduction}
+\label{sec:intro}
+
+\paragraph{Why measure information in trades.} Prices move when people trade, for two different
+reasons. Some trades carry private information about value; the price moves and stays moved. Other
+trades only demand liquidity; the price moves to compensate the liquidity provider and then comes back.
+\citet{kyle1985} and \citet{glosten1985} formalise the first channel; \citet{roll1984} shows that the
+second, bid--ask bounce, is enough to make successive price changes negatively correlated even when no
+information arrives. A trader, a market maker and a regulator all want to know how much of a price move
+is information, because it determines how much a trade really costs and how fast information reaches
+prices.
+
+\paragraph{The Hasbrouck VAR.} \citet{hasbrouck1991} proposed a simple way to separate the two channels
+using only a record of trades and quotes: regress quote revisions on current and past signed trades
+and on past revisions, and regress signed trades on their own past and on past revisions. The
+cumulative response of the price to a trade surprise is the part of impact that does not reverse, i.e.\
+the information content. The model has become a textbook tool \citep{hasbrouck2007}.
+
+\paragraph{The practical problem.} The model needs the sign of every trade, usually inferred from
+trade and quote data with the rule of \citet{lee1991}. Such data are expensive and heavy. OHLCV bars,
+in contrast, are free, universal and go back decades. A natural shortcut is to run the same
+regressions on bars, using the bar's direction $\operatorname{sign}(C_t-O_t)$ as the trade sign and
+either the close or the midpoint of the bar's range as the price. If the shortcut worked, the
+information content of trades could be measured for any asset with bars.
+
+\paragraph{What this paper does.} We run the shortcut on @@nstocks@@ S\&P~500 stocks with 5-minute bars
+from December 2019 to January 2025 and ask a simple question: when the regression reports an effect,
+is it information or is it a property of how the bar was built?
+
+\paragraph{Findings.}
+\begin{enumerate}
+\item \textbf{The contemporaneous impact with close prices is a formula.} It is large (@@b0_cls@@ bps
+per unit of flow) and significant in every stock. But because the trade sign is the sign of the bar's
+own open-to-close return, the coefficient is almost exactly
+$\E|oc_t|/\operatorname{Var}(x_t)$. This formula, which uses no regression, gives @@b0_pred@@ bps; the
+two correlate @@b0_corr@@ across stocks.
+\item \textbf{The lagged impact with midpoint prices is a displaced identity.} With the range midpoint
+as the price, impact appears to carry into the next bar ($b_1=$ @@b1@@ bps, significant in
+@@sig_before@@ of stocks). The next bar's midpoint return contains a term fixed at the close of the
+current bar. Controlling for that term cuts $b_1$ by @@b1_removed@@.
+\item \textbf{Order flow is unforecastable.} The flow equation explains @@flow_r2@@ of the variance of
+next bar's sign.
+\item \textbf{The two-step forecast is not identified.} A popular way to use the VAR for forecasting
+first predicts next bar's flow and then adds that prediction to the return regression. We prove that
+the added regressor is a linear combination of the others, so its coefficient does not exist; in
+@@ts_refits@@ walk-forward refits the design matrix has rank @@ts_rank@@ with @@ts_cols@@ columns.
+\end{enumerate}
+
+\paragraph{Why this matters.} None of these problems is visible in the usual diagnostics. The
+coefficients have huge $t$-statistics, replicate in every stock, survive robust standard errors and
+out-of-sample tests, and raise $R^2$. An identity passes all of these checks by construction. The
+contribution of the paper is to show exactly where the identities come from, to measure how much of
+each coefficient they explain, and to give a test that finds them.
+
+\paragraph{Roadmap.} Section~\ref{sec:background} reviews the model and the proxies. Section~\ref{sec:data}
+describes the data and every estimation choice. Section~\ref{sec:est} reports the estimates.
+Sections~\ref{sec:b0}--\ref{sec:twostep} explain the three problems. Section~\ref{sec:checklist} turns
+them into a test for bar-level research, and Section~\ref{sec:limits} lists the limitations.
+
+%=====================================================================
+\section{Background}
+\label{sec:background}
+
+\subsection{Two reasons prices respond to trades}
+
+In \citet{kyle1985} an informed trader splits a large order over time so as not to reveal it at once;
+market makers learn from the order flow and move prices gradually. In \citet{glosten1985} each trade
+may come from an informed trader, so the market maker revises the quote after every buy or sell. Both
+models predict that signed order flow moves prices permanently and that the adjustment can take more
+than one trade. \citet{roll1984} shows the opposite effect: if trades alternate between bid and ask
+around a constant value, traded prices bounce and their changes are negatively autocorrelated with no
+information at all. Any regression of price changes on trade signs picks up both effects.
+
+\subsection{The Hasbrouck VAR}
+
+\citet{hasbrouck1991} writes, for price changes $r_t$ and signed trades $x_t$,
+\begin{align}
+r_t &= \sum_{i=1}^{L} a_i\, r_{t-i} + \sum_{j=0}^{L} b_j\, x_{t-j} + u_t, \label{eq:price}\\
+x_t &= \sum_{i=1}^{L} c_i\, r_{t-i} + \sum_{j=1}^{L} d_j\, x_{t-j} + v_t. \label{eq:flow}
+\end{align}
+The coefficients have direct meanings. $a_i$ measure autocorrelation of price changes, e.g.\ bounce.
+$b_0$ is the immediate price response to a trade; $b_j$ ($j\ge1$) is the part of the response that
+arrives later. $c_i$ measure how past price changes affect trading (for example inventory control by
+market makers), and $d_j$ measure persistence of order flow (for example order splitting). The price
+equation contains $x_t$ but the flow equation does not contain $r_t$: within an interval the trade is
+assumed to happen before the price revision it causes. On trade-by-trade data this is a fact about the
+order of events. The impulse response of $r$ to a unit shock in $x$ is
+\begin{equation}
+g_0 = b_0,\qquad g_h = b_h + \sum_{k=1}^{\min(h,L)} a_k\, g_{h-k}\quad(h\ge1),
+\label{eq:irf}
+\end{equation}
+and its sum is the permanent impact.
+
+\subsection{Measuring order flow without trades}
+
+The sign of a trade is usually inferred by comparing its price with the prevailing quotes, with the
+previous trade price as a fallback \citep{lee1991}. Without trades or quotes, a common substitute is the
+direction of a bar, $x_t = \operatorname{sign}(C_t-O_t)$: a bar that closes above its open is taken as
+buying pressure. The price can be the close $C_t$ or the midpoint of the range $(H_t+L_t)/2$, which looks
+like a quote midpoint. It is not one. A quote midpoint is a price at one moment; the range midpoint is an
+average over the bar. \citet{working1960} shows that changes of averaged prices are positively
+autocorrelated even when the underlying price is a random walk. Section~\ref{sec:b1} shows how this
+matters.
+
+%=====================================================================
+\section{Data and estimation choices}
+\label{sec:data}
+
+\paragraph{Data.} @@nstocks@@ S\&P~500 stocks with 5-minute regular-hours bars from Interactive Brokers for
+the whole period, 2019-12-09 to 2025-01-10, 78 bars per session; on average @@nobs@@ usable bars per
+stock. @@share_up@@ of bars close above their open and @@share_flat@@ close exactly at their open, so
+$x_t\in\{-1,0,1\}$.
+
+\paragraph{Returns in basis points of log price.} $r_t = 10^4(\log p_t-\log p_{t-1})$. A raw price
+change on a \$500 stock and on a \$30 stock are not comparable; basis points make coefficients
+comparable across stocks, so they can be averaged.
+
+\paragraph{Two prices.} MID: $p_t=(H_t+L_t)/2$. CLOSE: $p_t=C_t$.
+
+\paragraph{Overnight returns are removed.} The first return of each session is set to missing. The
+overnight return has a median standard deviation of @@on_sd@@ bps against @@on_5m@@ bps for a 5-minute return
+(@@on_ratio@@ times larger) and is generated by a different process
+(news, auctions, no continuous trading). Keeping it inflates the variance of $r$ without adding
+covariance with $x$, which lowers every $R^2$. Table~\ref{tab:overnight} shows that removing it does not
+change any conclusion. The cost is that the first $L$ bars of a session have incomplete lags and are
+dropped.
+
+\paragraph{Five lags.} $L=@@nlags@@$ covers 25 minutes of history. Coefficients beyond the third lag are
+already small (Table~\ref{tab:varmid}), so more lags add parameters without information.
+
+\paragraph{Estimation.} OLS per stock with Newey--West standard errors \citep{newey1987}, bandwidth
+@@hac@@. Residuals of 5-minute regressions are heteroskedastic (volatility changes through the day) and
+mildly autocorrelated; Newey--West standard errors remain valid under both.
+
+\paragraph{Summarising @@nstocks@@ regressions.} We report the average coefficient across stocks; a
+cross-sectional $t$-statistic (the average divided by its standard error across stocks), which does
+not assume that stocks are independent within a bar; the median within-stock $t$; and the share of
+stocks significant at 5\% in each direction. The last is needed because a coefficient that is
+significantly positive in half the stocks and negative in the other half should not be called
+significant.
+
+\paragraph{What would count as evidence of information.} Stated before estimation: (i) $b_0$ large
+and significant, which is necessary but, as we show, not sufficient; (ii) lagged impact $b_{j\ge1}$
+significant and robust to controls for how the bar is built; (iii) order flow at least partly
+forecastable, otherwise the VAR adds nothing to forecasting.
+
+%=====================================================================
+\section{Estimates}
+\label{sec:est}
+
+\begin{table}[htbp]
+\centering
+\caption{Price equation \eqref{eq:price}. Averages over @@nstocks@@ stocks, bps of return per unit of $x$.
+``cs-$t$'': cross-sectional $t$; ``med-$t$'': median Newey--West $t$ within stocks; last two columns: \%
+of stocks with $t>1.96$ and $t<-1.96$.}
+\label{tab:varmid}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Coeff & Mean & cs-$t$ & med-$t$ & \% sig.\ $+$ & \% sig.\ $-$ \\
+\midrule
+\multicolumn{6}{@{}l}{\textit{MID price, $R^2=$ @@r2p_mid@@}} \\
+@@P1_VARMID@@
+\midrule
+\multicolumn{6}{@{}l}{\textit{CLOSE price, $R^2=$ @@r2p_cls@@}} \\
+@@P1_VARCLS@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Flow equation \eqref{eq:flow}. Same layout; $c_i$ are per basis point of past return.}
+\label{tab:flow}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Coeff & Mean & cs-$t$ & med-$t$ & \% sig.\ $+$ & \% sig.\ $-$ \\
+\midrule
+\multicolumn{6}{@{}l}{\textit{MID price, $R^2=$ @@r2f_mid@@}} \\
+@@P1_VARMIDF@@
+\midrule
+\multicolumn{6}{@{}l}{\textit{CLOSE price, $R^2=$ @@r2f_cls@@}} \\
+@@P1_VARCLSF@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Reading Table~\ref{tab:varmid}.} Contemporaneous impact $b_0$ is large and significant in every
+stock for both prices, with CLOSE about twice MID. The two prices then disagree completely about the
+next bar. With MID, $b_1$ is almost as large as $b_0$ and significant in every stock, and $a_1$ is
+positive in almost every stock. With CLOSE, $b_1$ is significant in about as many stocks as a true zero
+would produce at the 5\% level, and $a_1$ is slightly negative. Read at face value, MID says that half
+of the price response to a trade arrives five minutes later; CLOSE says that none does.
+
+\paragraph{Reading Table~\ref{tab:flow}.} The flow equation explains almost nothing: $R^2$ is at most
+@@r2_flow_max@@ in any stock. The only coefficient significant in most stocks is $d_1<0$: a buying bar is
+slightly more likely to be followed by a selling bar. Criterion (iii) fails outright.
+
+\begin{table}[htbp]
+\centering
+\caption{Robustness to keeping the overnight return. Averages over stocks.}
+\label{tab:overnight}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+& $a_1$ & $b_0$ & $b_1$ & $b_2$ & $R^2$ \\
+\midrule
+@@P1_ON@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+Keeping overnight returns roughly halves $R^2$ and moves $a_1$, as expected, but leaves the pattern
+unchanged: large $b_1$ with MID, none with CLOSE.
+
+%=====================================================================
+\section{The CLOSE $b_0$ is a regression of a return on its own sign}
+\label{sec:b0}
+
+With CLOSE prices, $r_t = 10^4(\log C_t - \log C_{t-1})$. Within a session the open of bar $t$ is almost
+the close of bar $t-1$, so $r_t$ is almost the bar's own open-to-close return $oc_t = 10^4\log(C_t/O_t)$.
+And $x_t$ is, by definition, the sign of $oc_t$.
+
+\begin{proposition}[$b_0$ without a regression]
+\label{prop:b0}
+Let $oc_t$ have mean zero and let $x_t=\operatorname{sign}(oc_t)$. The coefficient of a regression of
+$oc_t$ on $x_t$ is
+\[
+\frac{\operatorname{Cov}(oc_t,x_t)}{\operatorname{Var}(x_t)} = \frac{\E[oc_t\,x_t]}{\operatorname{Var}(x_t)}
+= \frac{\E|oc_t|}{\operatorname{Var}(x_t)} .
+\]
+\end{proposition}
+\begin{proof}
+$oc_t\,x_t = oc_t\operatorname{sign}(oc_t)=|oc_t|$ for every bar, and $\E[x_t]\approx0$, so
+$\operatorname{Cov}(oc_t,x_t)=\E|oc_t|$.
+\end{proof}
+
+The formula needs no regression and no assumption about information. Table~\ref{tab:ladder} goes step
+by step from a back-of-the-envelope version of the formula to the fitted coefficient, on exactly the
+bars used in the regression.
+
+\begin{table}[htbp]
+\centering
+\caption{From the formula to the fitted CLOSE $b_0$. Averages over stocks, bps.}
+\label{tab:ladder}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Step & Value & Change \\
+\midrule
+@@P1_LADDER@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Reading the ladder.} Step (0) assumes normal returns, for which $\E|oc|=0.80\,\mathrm{sd}(oc)$.
+Five-minute returns have excess kurtosis of @@lad_exkurt@@, so the actual ratio is @@lad_ratio@@ and step (1)
+is lower. Step (2) divides by $\operatorname{Var}(x)=$ @@varx@@, which is below one because @@pzero@@ of bars
+have $x_t=0$. Step (3) swaps $oc_t$ for $r_t$; they differ by the small jump between the previous close
+and the current open (standard deviation @@lad_gap_sd@@ bps, correlation with $x_t$ of @@lad_gap_corr@@).
+Step (4) adds all the lags, which changes $b_0$ by almost nothing. The formula
+$\E|oc|/\operatorname{Var}(x)=$ @@b0_pred@@ is within one percent of the fitted @@b0_cls@@, the two
+correlate @@b0_corr@@ across stocks, and their median ratio is @@lad_med@@. The CLOSE $b_0$ measures the
+average size of a 5-minute move, not the information in a trade.
+
+%=====================================================================
+\section{The MID $b_1$ is an identity displaced by one bar}
+\label{sec:b1}
+
+An identity within a bar cannot, one would think, explain a coefficient that links one bar's flow to
+the next bar's return. It can, if the price is an average over the bar.
+
+\subsection{The decomposition}
+
+Split the next bar's midpoint return at the current close:
+\begin{equation}
+r^{\mathrm{mid}}_{t+1} = \underbrace{10^4\big(\log \mathrm{mid}_{t+1}-\log C_t\big)}_{\text{new information}}
++ \underbrace{10^4\big(\log C_t-\log \mathrm{mid}_t\big)}_{\mathrm{cl}_t,\ \text{known at the close of bar } t}.
+\label{eq:decomp}
+\end{equation}
+The equation is exact. The second term, the close-location term $\mathrm{cl}_t$, depends only on bar $t$.
+It is positive when the bar closes in the upper half of its range. A bar that closes above its open
+usually closes in the upper half of its range, so $\mathrm{cl}_t$ and $x_t$ are strongly correlated
+(@@corr_x_cl@@ on average). A regression of $r^{\mathrm{mid}}_{t+1}$ on $x_t$ therefore finds a positive
+coefficient even if the first term, the only part that is about the future, is unrelated to $x_t$.
+
+\subsection{A worked example}
+
+\begin{table}[htbp]
+\centering
+\caption{AAPL, @@ex_day@@, the @@ex_time@@ bar and the bar after it. Prices in \$, returns in bps.}
+\label{tab:example}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+& Open & High & Low & Close & Midpoint \\
+\midrule
+Bar $t$ & @@ex_o@@ & @@ex_h@@ & @@ex_l@@ & @@ex_c@@ & @@ex_mid@@ \\
+Bar $t+1$ & @@ex_o1@@ & @@ex_h1@@ & @@ex_l1@@ & @@ex_c1@@ & @@ex_mid1@@ \\
+\bottomrule
+\end{tabular}
+
+\vspace{6pt}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Direction of bar $t$, $x_t=\operatorname{sign}(C_t-O_t)$ & $-1$ \\
+Known term $\mathrm{cl}_t = 10^4\log(C_t/\mathrm{mid}_t)$, fixed at the close of bar $t$ & @@ex_cl@@ \\
+New information $10^4\log(\mathrm{mid}_{t+1}/C_t)$ & @@ex_fwd@@ \\
+Midpoint return $r^{\mathrm{mid}}_{t+1}$ (sum of the two lines above) & @@ex_rmid@@ \\
+Close-to-close return $r^{\mathrm{cls}}_{t+1}$ & @@ex_rcls@@ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Bar $t$ is a down bar that closes near its low, so its close is @@ex_cl@@ bps below its midpoint. In the
+next bar the price recovers: the close-to-close return is @@ex_rcls@@ bps. But the midpoint return is
+only @@ex_rmid@@ bps, because @@ex_cl@@ of it was already fixed when bar $t$ closed and the new movement
+(@@ex_fwd@@) is almost cancelled by it. Across thousands of bars this known term makes down bars look as
+if they are followed by further midpoint declines, i.e.\ it creates a positive $b_1$ in the MID
+regression.
+
+\subsection{What the identity predicts}
+
+If $b_1$ were nothing but the identity, it would equal the coefficient of $\mathrm{cl}_t$ on $x_t$. For
+$x_t\in\{-1,1\}$ with roughly equal frequencies this is half the difference of the conditional means,
+\begin{equation}
+b_1^{\text{identity}} = \tfrac12\big(\E[\mathrm{cl}_t\,|\,x_t=1]-\E[\mathrm{cl}_t\,|\,x_t=-1]\big),
+\label{eq:predict}
+\end{equation}
+the factor $\tfrac12$ turning a change from $-1$ to $+1$ into a change per unit of $x$. The formula uses no
+regression and no future data.
+
+\subsection{Three tests}
+
+\textbf{Test 1:} compute \eqref{eq:predict} for each stock and compare it with the fitted $b_1$.
+\textbf{Test 2:} add $\mathrm{cl}_{t-1}$ to the MID price equation; information would survive, an
+identity would not. \textbf{Test 3:} look at CLOSE, where $C_t$ is the anchor of both returns and no
+such term exists.
+
+\begin{table}[htbp]
+\centering
+\caption{Tests of the MID lagged coefficient, @@nstocks@@ stocks.}
+\label{tab:tests}
+\small
+\begin{tabular}{@{}lr@{}}
+\toprule
+Average fitted $b_1$ & @@b1@@ bps \\
+Average identity prediction \eqref{eq:predict} & @@id_pred@@ bps \\
+Correlation across stocks, fitted vs.\ predicted & @@id_corr@@ \\
+\midrule
+Average $b_1$ after adding $\mathrm{cl}_{t-1}$ & @@b1_ctrl@@ bps \\
+Stocks with $|t(b_1)|>1.96$, before / after & @@sig_before@@ / @@sig_after@@ \\
+\quad of which positive / negative after & @@sig_after_pos@@ / @@sig_after_neg@@ \\
+Price-equation $R^2$, before / after & @@r2_before@@ / @@r2_after@@ \\
+Average $b_0$, before / after & @@b0_mid@@ / @@b0_mid_ctrl@@ \\
+\midrule
+Average CLOSE $b_1$ (no such term) & @@cls_b1@@ bps \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.55\textwidth, height=0.5\textwidth, xlabel={Identity prediction \eqref{eq:predict} (bps)},
+  ylabel={Fitted MID $b_1$ (bps)}, xmin=0, ymin=0, xmax=@@sc_max@@, ymax=@@sc_max@@, grid=major, grid style={gray!20}]
+\addplot[only marks, mark=*, mark size=0.8pt, opacity=0.6] coordinates {@@SCATTER@@};
+\addplot[dashed, domain=0:@@sc_max@@] {x};
+\end{axis}
+\end{tikzpicture}
+\caption{Each point is a stock. The dashed line is the 45-degree line. The fitted $b_1$ lines up with a
+number that is computed without any regression.}
+\label{fig:scatter}
+\end{figure}
+
+\paragraph{Test 1: the identity explains the pattern across stocks.} The fitted $b_1$ and the prediction
+correlate @@id_corr@@ (Figure~\ref{fig:scatter}). The fitted value is below the prediction on average
+because the regression also contains the lags of $r$ and $x$, which absorb part of the same variation.
+What matters is that knowing where closes sit within their ranges in a stock almost fully tells us that
+stock's $b_1$.
+
+\paragraph{Test 2: the coefficient does not survive the control.} Adding one regressor removes
+@@b1_removed@@ of $b_1$ and the share of significant stocks falls from @@sig_before@@ to @@sig_after@@.
+$R^2$ rises from @@r2_before@@ to @@r2_after@@: most of what the MID regression explained was the known
+term. $b_0$ does not move, which shows that the control removes the identity and nothing else.
+
+\paragraph{Test 3: no identity, no coefficient.} With CLOSE, $b_1 =$ @@cls_b1@@ bps.
+
+\subsection{The same mechanism explains $a_1$ and the impulse response}
+
+The MID $a_1$ is @@a1_mid@@ while the CLOSE $a_1$ is @@a1_cls@@. Averaging prices over a bar makes their
+changes positively autocorrelated \citep{working1960}; closing prints bounce between bid and ask and
+make changes negatively autocorrelated \citep{roll1984}. Neither is the true price.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.75\textwidth,height=5cm, xlabel={Lag $h$ (5-minute bars)}, ylabel={Response (bps)},
+  legend pos=north east, grid=major, grid style={gray!25}, xmin=-0.3, xmax=8, ymin=-1, ymax=13]
+\addplot[thick,mark=*,mark size=1.4pt] coordinates {@@IRF_mid@@}; \addlegendentry{MID}
+\addplot[thick,dashed,mark=square*,mark size=1.4pt] coordinates {@@IRF_cls@@}; \addlegendentry{CLOSE}
+\end{axis}
+\end{tikzpicture}
+\caption{Impulse response \eqref{eq:irf} from the average coefficients. Cumulative responses:
+@@irf_mid@@ bps (MID) and @@irf_cls@@ bps (CLOSE).}
+\label{fig:irf}
+\end{figure}
+
+Figure~\ref{fig:irf} gives the decisive check. If MID kept information that CLOSE loses, its total response
+would be larger. The totals are @@irf_mid@@ and @@irf_cls@@ bps, the same. MID only spreads the same
+response over two bars instead of one, which is exactly what a price that lags the close by part of a
+bar should do.
+
+\subsection{What survives}
+
+After the control, $b_1$ is @@b1_ctrl@@ bps and significant in @@sig_after@@ of stocks, almost always
+positive. This is a genuine but small carry-over of impact into the next bar, @@b1_ratio@@ times smaller
+than the raw coefficient, and @@b1_over_tk@@ times smaller than the smallest cost of a single trade
+(half of one \$0.01 tick at the median stock price).
+
+%=====================================================================
+\section{The two-step forecast is not identified}
+\label{sec:twostep}
+
+To forecast $r_{t+1}$ with \eqref{eq:price} one needs $x_{t+1}$, which is unknown at time $t$. A popular
+construction first forecasts it and then uses the forecast:
+\begin{align*}
+\text{Step A:}\quad & \hat x_{t+1} = \Phi_t\,\hat\beta_x, \qquad \Phi_t=[1,\ r_t,\dots,r_{t-L+1},\ x_t,\dots,x_{t-L+1}],\\
+\text{Step B:}\quad & \hat r_{t+1} = \Phi_t\,\hat\beta + \delta\,\hat x_{t+1},
+\end{align*}
+with $\delta$ read as ``how much expected order flow moves expected returns beyond the lags''.
+
+\begin{proposition}[Degeneracy]
+\label{prop:twostep}
+If Step A uses the same regressors as Step B, then $\hat x = \Phi\hat\beta_x$ lies in the column space of
+$\Phi$. Hence (i) $[\Phi,\hat x]$ has rank equal to the number of columns of $\Phi$, one less than its own
+number of columns; (ii) the fitted values of Step B equal those of the plain regression of $r$ on $\Phi$;
+(iii) $\delta$ is not identified: for any $s$, replacing $(\hat\beta,\delta)$ by
+$(\hat\beta - s\hat\beta_x,\ \delta+s)$ leaves every fitted value unchanged.
+\end{proposition}
+\begin{proof}
+(i) $\hat x$ is a linear combination of the columns of $\Phi$, so adding it adds no new direction.
+(ii) Least-squares fitted values are the projection of $r$ on the column space, which is unchanged by (i).
+(iii) $\Phi(\hat\beta-s\hat\beta_x)+(\delta+s)\Phi\hat\beta_x = \Phi\hat\beta+\delta\,\Phi\hat\beta_x$.
+\end{proof}
+
+The same holds for the ARX used for forecasting: substituting the flow equation into the price equation
+gives a forecast linear in $\Phi_t$ with coefficients $a_k+b_0c_k$ on returns and $b_k+b_0d_k$ on flow, so
+the one-step regression of $r_{t+1}$ on $\Phi_t$ already is the VAR forecast.
+
+\paragraph{Empirical check.} We ran both versions in a rolling walk-forward (1-year window, monthly
+refits) on every stock: @@ts_refits@@ refits. In every refit the augmented matrix has rank @@ts_rank@@
+with @@ts_cols@@ columns, and the two forecasts differ by at most @@ts_maxdiff@@ bps, i.e.\ they are the
+same numbers.
+
+\paragraph{What software reports.} Statistical software does not refuse a singular design; it returns
+the minimum-norm solution of the pseudo-inverse and a standard error computed from it. In our runs this
+``$\delta$'' is positive in @@ts_upos@@ of refits and has $|t|>2$ in @@ts_ut2@@. These numbers describe the
+pseudo-inverse, not the data. A reader who sees them cannot tell that $\delta$ does not exist.
+
+\paragraph{A version that is identified.} If Step A uses information that Step B does not have, here five
+lags of log volume and of the bar's range, $\hat x$ leaves the column space and $\delta$ can be estimated.
+It is then clearly positive (mean @@ts_imean@@, positive in @@ts_ipos@@ of refits, $|t|>2$ in @@ts_it2@@):
+expected order flow does move expected returns. It still does not help forecasting, because $\delta$
+multiplies $\hat x$, whose standard deviation is only about $\sqrt{R^2}=$ @@sd_ratio@@ of that of $x$. A
+coefficient can be real and precisely estimated and still move the forecast by almost nothing.
+
+%=====================================================================
+\section{A test for bar-level regressions}
+\label{sec:checklist}
+
+The two identities are special cases of a general rule. Any statistic of a bar is a function of the same
+five numbers $(O,H,L,C,V)$, so two statistics of the same bar are mechanically related. If the price is
+an interior statistic of the bar (range midpoint, $(H+L+C)/3$, VWAP), the decomposition \eqref{eq:decomp}
+moves part of bar $t$ into the return of bar $t+1$, and the relation appears at lag one. If the price is
+a rolling average over $k$ bars, it appears up to lag $k$ and looks like slowly decaying impact. The
+following steps catch this before a result is interpreted.
+
+\begin{enumerate}
+\item \textbf{Write the identity.} Decompose the target through bar endpoints, as in \eqref{eq:decomp},
+and find any term that is known at time $t$.
+\item \textbf{Predict the coefficient without the regression}, as in Proposition~\ref{prop:b0} or
+\eqref{eq:predict}, and correlate the prediction with the fitted coefficient across assets.
+\item \textbf{Control for the known term} and report the coefficient before and after.
+\item \textbf{Check the rank} of any design that contains a fitted value from an earlier regression.
+\item \textbf{Score forecasts on a return that a trade can earn}, never only on the model's own target.
+\end{enumerate}
+
+Each step is cheap enough to run on every new feature. Standard diagnostics do not help: an identity has large $t$-statistics, replicates across
+assets, survives robust standard errors and out-of-sample tests, and raises $R^2$.
+
+%=====================================================================
+\section{Limitations}
+\label{sec:limits}
+
+\paragraph{No trade data.} The paper shows what the bar version measures; it cannot show what the
+trade-level version would find on the same stocks. The natural next step is to sign trades with
+\citet{lee1991} and run \eqref{eq:price}--\eqref{eq:flow} on trade time.
+
+\paragraph{One frequency and one market.} Everything is 5-minute US large caps. The identities do not
+depend on the frequency, but the size of the residual effect in Section~\ref{sec:b1} does.
+
+\paragraph{Survivorship.} The sample contains stocks with data for the whole period. This is unlikely
+to affect the identities, which hold bar by bar, but the averages describe surviving large caps.
+
+%=====================================================================
+\section{Conclusion}
+
+On 5-minute bars the Hasbrouck VAR produces results that look like strong evidence of information in
+trades and are mostly arithmetic. With close prices the contemporaneous coefficient is a function of the
+size of 5-minute moves; with range-midpoint prices the lagged coefficient is a known term moved by one
+bar; order flow cannot be forecast; and the two-step forecast built on the VAR is not identified.
+Information in trades is real, but these bars cannot show it. Work with bar data should decompose the
+target, predict the suspect coefficient without the regression, and control for the known term before
+reading any coefficient as economics.
+
+@@REFS@@
+
+\end{document}

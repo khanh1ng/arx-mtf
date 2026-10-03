@@ -1,0 +1,457 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{groupplots}
+\usepackage[round]{natbib}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue]{hyperref}
+\usepackage{parskip}
+\usepackage{caption}
+
+\newtheorem{proposition}{Proposition}
+\newcommand{\E}{\mathbb{E}}
+\setlength{\emergencystretch}{1.5em}
+
+\title{\textbf{From Gross Edge to Net Profit}\\[0.4em]
+\large Fill Timing and Trading Costs in an Intraday Reversal Strategy}
+\author{Khanh Nguyen}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent A 5-minute direction model on @@nstocks@@ S\&P~500 stocks has a steady gross edge: filled at the
+close of the bar that produced the signal, \$1 million grows to @@p5_ag_end@@ in @@years@@ years with a
+Sharpe ratio of @@f_srA@@ and a worst drawdown of @@p5_ag_mdd@@. This paper asks how much of that survives
+execution. We make three contributions. First, we prove that the difference between filling at the
+signal bar's close and at the next bar's open equals position change times the jump between the two
+prints, and show that this jump is bid--ask bounce: it removes @@dec_share@@ of the gross edge. Second, we
+measure trading costs per stock and per day from the bars themselves, including an exact lower bound: no
+market order can pay less than half a \$0.01 tick. Third, we test whether trading less, trading
+tight-spread stocks, or combining timeframes rescues the strategy. It does not. Every one of the
+@@n_here@@ versions tested loses money at the lower-bound cost; the best out-of-sample version turns \$1
+million into @@plf_bt_end@@ over 2022--2025. The edge grows with the spread and is earned by whoever
+provides liquidity, not by whoever takes it.
+\end{abstract}
+
+%=====================================================================
+\section{Introduction}
+\label{sec:intro}
+
+\paragraph{Motivation.} Most strategies that look good in a backtest lose money when traded. For
+high-frequency strategies the main reason is simple: they trade often, and each trade costs money.
+\citet{novymarx2016} show that trading costs remove most of the profit of many published anomalies with
+high turnover. Intraday strategies turn over their whole book many times a day, so a cost of a fraction
+of a basis point per trade decides the result. Yet backtests often ignore costs or charge one flat
+number, and often assume a fill at the very price that produced the signal.
+
+\paragraph{Reversal and the spread.} Short-horizon returns reverse
+\citep{lehmann1990}. Part of this is bid--ask bounce: a trade at the bid followed by a trade at the ask
+looks like a reversal even when the value has not changed \citep{roll1984}. Bounce explains much of
+short-horizon reversal \citep{kaul1990,jegadeesh1995}, and reversal profits can be read as the return to
+providing liquidity \citep{nagel2012}. A reversal strategy measured on
+traded prices may therefore be measuring the spread, which a liquidity taker pays rather than earns.
+
+\paragraph{This paper.} We take a model with a real and steady gross edge, a multi-timeframe ARX on
+5-minute bars described in Section~\ref{sec:strategy}, and follow its profit from the backtest to what a
+trader would actually get. We ask three questions. How much of the gross edge depends on the assumed
+fill price? What does the strategy cost to trade, measured per stock and per day? And can any version,
+by trading less or trading only cheap stocks, pay for itself?
+
+\paragraph{Findings.}
+\begin{enumerate}
+\item \textbf{About half the gross edge is the fill assumption} (Section~\ref{sec:fill}). Moving the fill
+from the signal bar's close to the next bar's open, one print later, removes @@dec_share@@ of the 5-minute
+edge. We prove the difference equals position change times the jump from the close to the next open,
+and show that this jump reverses the last bar's move in @@gap_dn_sh@@ of stocks after down bars.
+\item \textbf{Every version loses money at the smallest possible cost} (Section~\ref{sec:results}). Half a
+\$0.01 tick is a cost no market order can avoid. At that cost all @@n_here@@ versions lose money.
+\item \textbf{The edge is the spread.} Gross breakeven rises from @@bkt_f_q1@@ to @@bkt_f_q5@@ bps from the
+tightest to the widest spread quintile, and correlates @@corr_be_ar@@ with each stock's spread.
+\item \textbf{The result is statistically solid.} Bootstrap confidence intervals for the net return lie
+below zero; the gross edge survives a correction for @@n_all@@ trials (deflated Sharpe @@dsr_all@@).
+\end{enumerate}
+
+%=====================================================================
+\section{The strategy in brief}
+\label{sec:strategy}
+
+\paragraph{Forecast.} For each stock and each of six timeframes (5 minutes to 4 hours), a linear
+regression forecasts the next bar's close-to-close return from five lags of return and five lags of a
+bounded bar-level flow proxy, $\tanh(\operatorname{sign}(C-O)\cdot|C-O|/(H-L)\cdot\log(1+V))$. Each forecast
+is divided by recent volatility, bounded with $\tanh$, and the six scores are averaged, with equal weights
+or with weights learned on 2021 only. Models are refitted monthly on the previous year.
+
+\paragraph{Positions.} Long one unit if the score is positive, short if negative (``sign''); or a position
+equal to the score (``size''); or the sign only when the score is in the top quarter of its recent
+distribution, holding the previous position otherwise (``filtered''). ``CLOSE 5m'' is the 5-minute
+timeframe alone.
+
+\paragraph{Book and period.} @@nstocks@@ stocks with 5-minute regular-hours bars, equal weight,
+@@names@@ stocks per bar on average, @@start@@ to @@end@@ (@@years@@ years); 2022--2025 is a hold-out for
+the learned weights. Positions are closed at every session end. A look-ahead test, run on truncated
+data and shown to catch a deliberate leak, confirms that no decision uses later data.
+
+\paragraph{What the signal is.} The coefficient on the latest return is negative in @@beta_r0_neg@@ of
+monthly refits; the flow coefficients are coin flips. The model is a one-bar reversal.
+
+%=====================================================================
+\section{Fill timing}
+\label{sec:fill}
+
+\subsection{Three fill rules}
+
+A decision is made at the end of 5-minute bar $t$, with position $w_t$ held into bar $t+1$. We compare:
+\begin{itemize}
+\item \textbf{Close fill}: trade at $C_t$, the last price of the signal bar. Profit $w_t\,(C_t\to C_{t+1})$.
+This is the usual backtest convention.
+\item \textbf{Next-open fill}: trade at $O_{t+1}$, the first print after the signal, which is what a market
+order sent at the bar close receives. The old position $w_{t-1}$ is held from $C_t$ to $O_{t+1}$, the new
+one from $O_{t+1}$ to $C_{t+1}$.
+\item \textbf{One-bar delay}: trade at $C_{t+1}$, a signal one bar stale.
+\end{itemize}
+Returns are in bps of log price, so $(C_t\to C_{t+1}) = (C_t\to O_{t+1}) + (O_{t+1}\to C_{t+1})$ exactly.
+
+\begin{proposition}[What the close fill adds]
+\label{prop:fill}
+Per bar, profit with the close fill minus profit with the next-open fill equals
+$(w_t-w_{t-1})\cdot(C_t\to O_{t+1})$.
+\end{proposition}
+\begin{proof}
+Close fill: $w_t(C_t\to O_{t+1}) + w_t(O_{t+1}\to C_{t+1})$. Next-open fill:
+$w_{t-1}(C_t\to O_{t+1}) + w_t(O_{t+1}\to C_{t+1})$. Subtract.
+\end{proof}
+
+The close fill therefore earns extra exactly when the position changes in the direction of the jump
+from the close to the next print. For a reversal strategy the position changes after a bar moved: after a
+down bar it buys. If the close of a down bar tends to be printed at the bid, the next print is higher,
+and the close fill credits the strategy with a gain that the buyer, who pays the ask, never gets.
+
+\paragraph{The jump is bounce.} The move from the close to the next print averages @@gap_up@@ bps after up
+bars and @@gap_dn@@ bps after down bars: it goes against the last bar in @@gap_up_sh@@ and @@gap_dn_sh@@ of
+stocks respectively. The
+first print after the close moves back towards the middle of the spread, as \citet{roll1984} predicts
+for prints that alternate between bid and ask.
+
+\begin{table}[htbp]
+\centering
+\caption{Breakeven half-spread (bps) under each fill rule, and gross Sharpe ratio. Breakeven is gross
+profit per bar divided by turnover per bar.}
+\label{tab:fill}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+& \multicolumn{3}{c}{Breakeven (bps)} & \multicolumn{2}{c}{Gross Sharpe} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}
+Strategy & Close fill & Next open & 1-bar delay & Close fill & Next open \\
+\midrule
+@@TAB_fill@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Reading Table~\ref{tab:fill}.} For CLOSE 5m, the close fill earns @@dec_A@@ bps per bar and the
+next-open fill @@dec_B@@; the difference, @@dec_diff@@ bps, is the term of Proposition~\ref{prop:fill}, and
+is @@dec_share@@ of the close-fill edge (@@dec_ef_share@@ for the filtered book). Across strategies the
+breakeven falls by @@fill_cut_lo@@--@@fill_cut_hi@@. With a one-bar delay almost nothing is left: the signal's
+information lasts about one bar. The 4-hour model is the exception: it trades rarely, so the fill hardly
+matters. All results below use the next-open fill.
+
+%=====================================================================
+\section{Trading costs}
+\label{sec:costs}
+
+\subsection{Net profit and breakeven}
+
+With half-spread $c$ (in bps) and turnover $|w_t-w_{t-1}|$, the net profit of a bar is
+gross profit $-\,c\cdot|w_t-w_{t-1}|$. A switch from long to short counts two and pays two half-spreads. The
+breakeven half-spread is gross profit per bar divided by turnover per bar: the largest cost at which the
+book still breaks even. A high Sharpe ratio built from small bets can coexist with a very low breakeven,
+so breakeven, not Sharpe, decides whether a strategy can be traded.
+
+\subsection{Three cost measures}
+
+We have no quote data, so costs are measured from the bars. All three measures are computed per stock
+and per day from data before that day.
+
+\paragraph{Tick floor (exact lower bound).} Prices move in \$0.01 ticks, so the quoted spread is at least
+one tick and a market order pays at least half a tick: $c^{\text{tick}} = 0.005/P\times10^4$ bps, with $P$
+the previous session's close. This is not an estimate. If a strategy loses money at this cost, it loses
+money at every real cost.
+
+\paragraph{Abdi--Ranaldo (central estimate).} \citet{abdi2017} note that the distance between the close
+and the midpoint of the range, $c_t-\eta_t$ with $\eta=(h+l)/2$ in logs, contains half the spread with a
+random sign, and that this sign is independent across bars. Hence
+$S^2 = 4\,\E[(c_t-\eta_t)(c_t-\eta_{t+1})]$. We average the products over the previous
+@@spread_days@@ sessions and take the square root (zero if negative). The estimator uses the close, so it
+measures exactly the kind of bounce a reversal strategy trades on.
+
+\paragraph{Corwin--Schultz (upper estimate).} \citet{corwin2012} use the fact that the high--low range of
+one bar contains the variance once and the spread once, while the range over two bars contains the
+variance twice and the spread still once. Two equations give the spread. We apply it to consecutive
+5-minute bars, set negative values to zero and average over the previous @@spread_days@@ sessions. The
+estimator assumes the price moves continuously within the bar, which fails for short, thinly traded bars
+and biases it upwards when volatility is high.
+
+\begin{table}[htbp]
+\centering
+\caption{Half-spreads across stocks (bps), average over the sample for each stock.}
+\label{tab:costdist}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Measure & 10\% & 25\% & Median & 75\% & 90\% \\
+\midrule
+@@P3_COSTDIST@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Reading Table~\ref{tab:costdist}.} Liquid large caps usually quote one or a few ticks wide.
+The Abdi--Ranaldo median of @@ar_med@@ bps is a few times the tick floor, which is plausible. The
+Corwin--Schultz median of @@cs_med@@ bps is too high for stocks this liquid; its largest values are for the
+most volatile names (@@cs_top@@), consistent with its volatility bias. We therefore base the verdict on
+the tick floor, use Abdi--Ranaldo as the central case, and report Corwin--Schultz only as an upper
+estimate. This rule was fixed before the cost results were seen.
+
+%=====================================================================
+\section{Results}
+\label{sec:results}
+
+\subsection{The edge grows with the spread}
+
+\begin{table}[htbp]
+\centering
+\caption{Stocks split each day into quintiles of their past Abdi--Ranaldo spread (q1 tightest).
+Next-open fill. The split was fixed before the results were seen.}
+\label{tab:bkt}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+& q1 & q2 & q3 & q4 & q5 \\
+\midrule
+@@TAB_bkt@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Reading Table~\ref{tab:bkt}.} Gross breakeven is lowest in the tightest-spread stocks and
+highest in the widest: @@bkt_f_q1@@ to @@bkt_f_q5@@ bps for CLOSE 5m, @@bkt_ef_q1@@ to @@bkt_ef_q5@@ for the
+filtered book. Across stocks, breakeven correlates @@corr_be_ar@@ with the stock's spread. A signal that is
+strongest where the spread is widest is harvesting the spread.
+
+\paragraph{Trading only cheap stocks does not help.} Under Abdi--Ranaldo costs the tightest quintile
+roughly breaks even (@@q1_ar_f@@ for CLOSE 5m). This is not credible: the same noisy estimate chooses the
+stocks and sets their cost, so stocks whose spread is under-estimated are chosen and then under-charged.
+At the tick floor, which has no estimation error, the same quintile returns @@q1_tk_f@@.
+
+\paragraph{Per stock.} Only @@beat_tk_f@@ of stocks have a 5-minute breakeven above their own tick floor
+(@@beat_tk_ef@@ for the filtered book), and @@beat_ar_f@@ (@@beat_ar_ef@@) above their own Abdi--Ranaldo spread.
+
+\subsection{Performance in dollars}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=1.5cm},
+  width=0.49\textwidth, height=5cm, ymode=log, grid=major, grid style={gray!25},
+  xlabel={Months from Dec 2020}, xmin=0, xmax=50,
+  legend style={font=\scriptsize, legend columns=4, /tikz/every even column/.append style={column sep=6pt}},
+  tick label style={font=\scriptsize}, label style={font=\small}, title style={font=\small}]
+\nextgroupplot[title={(a) CLOSE 5m}, ylabel={Value of \$1}, ymin=0.001, ymax=6]
+\addplot[thick, gray] coordinates {@@EQM_f_A@@};
+\addplot[thick, black] coordinates {@@EQM_f_B@@};
+\addplot[thick, black, dashed] coordinates {@@EQM_f_Bt@@};
+\addplot[thick, black, dotted] coordinates {@@EQM_f_Ba@@};
+\nextgroupplot[title={(b) MTF, equal weights, filtered}, ymin=0.4, ymax=1.6, ytick={0.5,0.75,1,1.5},
+  yticklabels={0.5,0.75,1,1.5}, legend to name=eqleg]
+\addplot[thick, gray] coordinates {@@EQM_ef_A@@}; \addlegendentry{close fill, gross}
+\addplot[thick, black] coordinates {@@EQM_ef_B@@}; \addlegendentry{next-open fill, gross}
+\addplot[thick, black, dashed] coordinates {@@EQM_ef_Bt@@}; \addlegendentry{next open, tick floor}
+\addplot[thick, black, dotted] coordinates {@@EQM_ef_Ba@@}; \addlegendentry{next open, Abdi--Ranaldo}
+\end{groupplot}
+\end{tikzpicture}\\[-2pt]
+\ref{eqleg}
+\captionof{figure}{Growth of \$1, log scale, month-end values. Grey to solid: the fill assumption. Solid
+to dashed: the smallest possible cost. Dashed to dotted: a realistic cost.}
+\label{fig:eq}
+\end{center}
+
+\begin{table}[htbp]
+\centering
+\caption{\$1{,}000{,}000 at the start, compounded bar by bar, @@start@@ to @@end@@. ``Vol'' is annual
+volatility; ``Max DD'' the largest fall from a peak; last column: share of months with a gain.}
+\label{tab:perf}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}llrrrrrrr@{}}
+\toprule
+Strategy & Fill, cost & End value & Total & CAGR & Vol & Sharpe & Max DD & Mo.\ $>0$ \\
+\midrule
+@@TAB_perf@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Out of sample, January 2022 -- January 2025 (@@hyears@@ years): MTF, learned weights, filtered.}
+\label{tab:perfoos}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+Fill, cost & End value & Total & CAGR & Vol & Sharpe & Max DD & Mo.\ $>0$ \\
+\midrule
+@@TAB_perfoos@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{CLOSE 5m.} Before costs the book is excellent: @@p5_ag_end@@ with the close fill, @@p5_bg_end@@
+with the next-open fill, and volatility of only @@p5_vol@@ because it is long about half the stocks and short
+the rest, so market moves cancel. It changes @@f_turn@@ units of position per bar. At the median tick floor
+that alone costs about @@cost_turn_f@@ bps per bar, close to its whole gross return, and the book ends at
+@@p5_bt_end@@. A high Sharpe ratio and a near-total loss are both correct: many tiny bets, each costing
+more to place than it earns.
+
+\paragraph{MTF, filtered.} Trading far less, it keeps more: @@pef_bg_end@@ gross, @@pef_bt_end@@ after the tick
+floor (@@pef_bt_tot@@, worst drawdown @@pef_bt_mdd@@), @@pef_ba_end@@ after Abdi--Ranaldo costs. Out of sample
+with learned weights (Table~\ref{tab:perfoos}) it ends at @@plf_bg_end@@ before costs and @@plf_bt_end@@
+after the tick floor.
+
+\paragraph{MID 5m} uses the midpoint of the range as its price and loses money before any cost
+(@@pm5_bg_end@@ with the next-open fill). Its apparent accuracy comes from a known term in the midpoint
+return, not from information.
+
+\subsection{Statistical confidence}
+
+\begin{table}[htbp]
+\centering
+\caption{95\% confidence intervals, moving-block bootstrap over trading days \citep{kunsch1989}
+(@@boot_block@@-day blocks, @@n_boot@@ draws), next-open fill.}
+\label{tab:ci}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+& & & \multicolumn{2}{c}{After the tick floor (\%)} \\
+\cmidrule(lr){4-5}
+Strategy & Gross Sharpe & Breakeven (bps) & CAGR & Max DD \\
+\midrule
+@@TAB_ci@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The loss is not noise.} Days are resampled in blocks to keep intraday and short-run dependence.
+After the tick floor the CAGR interval lies below zero for every book except the 4-hour model alone, which
+cannot be told apart from breakeven. The filtered book's breakeven interval is wide (@@bs_lo@@ to @@bs_hi@@
+bps across block lengths of 5, 20 and 60 days), so small differences between combined versions are not
+significant.
+
+\paragraph{The gross edge is not an artefact of search.} Trying many versions inflates the best Sharpe
+ratio \citep{harvey2016}. The deflated Sharpe ratio of \citet{bailey2014} corrects for the number of
+trials and for non-normal returns. Counting every configuration run on these data, @@n_all@@ including
+an earlier specification search and the robustness checks, the best gross Sharpe (@@dsr_sr@@) has a
+deflated Sharpe probability of @@dsr_all@@. And selection cannot explain a loss: @@all_neg@@ of the
+@@n_here@@ configurations lose money at the tick floor.
+
+\subsection{Risk and data quality}
+
+\begin{table}[htbp]
+\centering
+\caption{Risk before costs, next-open fill. Net exposure is the average position across stocks ($+1$ long,
+$-1$ short); beta and correlation are against the equal-weight return of all stocks, daily; DD days is
+the longest time below a previous peak.}
+\label{tab:risk}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+Strategy & Net exp. & 99th pct $|$net$|$ & Gross exp. & Beta & Corr. & Max DD & DD days \\
+\midrule
+@@TAB_risk@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Risk (Table~\ref{tab:risk}).} The books have no market exposure to speak of: net exposure is
+close to zero on average and daily beta is near zero. Losses after costs therefore come from trading, not
+from the market.
+
+\begin{table}[htbp]
+\centering
+\caption{Without the @@n_flag@@ stocks with more than 5\% of bars where $H=L$ or more than 1\% with zero volume.
+Breakeven in bps; total return after the tick floor, next-open fill.}
+\label{tab:robust}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{B/E close fill} & \multicolumn{2}{c}{B/E next open} & \multicolumn{2}{c}{Total, tick floor} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+Strategy & All & Excl. & All & Excl. & All & Excl. \\
+\midrule
+@@TAB_robust@@
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Stale prints (Table~\ref{tab:robust}).} @@n_flag@@ thinly traded, high-priced stocks (e.g.\
+@@flag_ex@@) have many bars in which the price does not move. Unchanged prices followed by a move look
+like reversals. Without these stocks the gross edge is smaller, especially with the close fill, and every
+conclusion holds. Interactive Brokers builds bars from filtered trades, so $C_t$ may not be the last print
+on the consolidated tape; tick data would sharpen the fill-timing result.
+
+\paragraph{Exploratory, not a strategy.} Looking by time of day after the results were known, the filtered
+book's breakeven is highest late in the afternoon (@@tod_best@@ bps in @@tod_best_win@@). This was not a
+planned test and should be checked on new data before it is believed.
+
+%=====================================================================
+\section{What would make it tradable}
+\label{sec:tradable}
+
+The gross edge is real, but it is the spread. A trader who crosses the spread pays it; a trader who posts
+limit orders at the bid after a down bar and at the ask after an up bar would earn it. That is a different
+business. A resting order fills only when the market trades through it, and the orders that fill are
+disproportionately the ones the market was about to move against (adverse selection); fills are
+uncertain, queue position matters, and exchange rebates and fees change the numbers. None of this can be
+measured without quote and order-book data, so we do not claim that a passive version would be
+profitable. What the analysis does show is the size of the target: the book can afford to pay
+at most @@ef_beB@@ bps per unit of position change, including adverse selection, to break even, while a market
+order pays at least @@tk_med@@ bps at the median stock.
+
+%=====================================================================
+\section{Limitations}
+\label{sec:limits}
+
+\paragraph{Costs from bars, not quotes.} The tick floor is exact but is a lower bound; Abdi--Ranaldo and
+Corwin--Schultz are estimates with known biases. Quote data would replace them.
+
+\paragraph{No market impact.} Only the spread is charged. An equal-weight book in @@nstocks@@ stocks
+trading every five minutes would move prices at any meaningful size, so the true cost is higher. This
+makes the negative verdict conservative.
+
+\paragraph{Selection.} The sample contains stocks with data through 2025. The set of versions was chosen
+after earlier results on the same data; the deflated Sharpe ratio corrects the gross result for this but a
+fresh set of stocks would be cleaner.
+
+%=====================================================================
+\section{Conclusion}
+
+A 5-minute reversal signal with a Sharpe ratio of @@f_srA@@ in a standard backtest loses money for any
+trader who uses market orders. About half of its edge is the assumption of a fill at the signal bar's own
+close, which Proposition~\ref{prop:fill} shows is exactly the bounce of the next print. The rest is smaller
+than the smallest possible cost of a trade. The edge grows with the spread, combining timeframes and
+filtering improve the edge per trade @@c5_lo@@ to @@c5_hi@@ times but not enough, and trading only cheap stocks
+does not help once costs are measured without estimation error. The practical lessons are to fill at the
+first print after the signal, to charge costs per stock with an exact lower bound, and to judge a
+high-turnover strategy by its breakeven cost, not its Sharpe ratio.
+
+@@REFS@@
+
+\end{document}
