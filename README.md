@@ -1,14 +1,35 @@
 # arx-mtf
 
-**Why a Sharpe-9 intraday signal loses money.** A three-paper study of order flow, forecasting and
-trading costs on 5-minute OHLCV bars for 431 S&P 500 stocks (December 2019 – January 2025).
-Every number in the papers is generated from the result files.
+**A 5-minute direction model with a real, statistically robust edge on 431 S&P 500 stocks, and a
+precise account of what it takes to capture it.** Three papers on order flow, forecasting and
+trading costs, on 5-minute bars from December 2019 to January 2025. Every number in the papers is
+generated from the result files.
 
-| Paper | Question | Answer |
+## Highlights
+
+* **Gross Sharpe 9.01:** filled at the signal bar's close, $1 million grows to $4,091,721 in 4.05
+  years with a worst drawdown of −2.2%.
+* **A steady, forecastable edge:** hit rate 0.506 and gross Sharpe 4.99 with next-open fills.
+* **Not a product of search:** the gross edge survives a correction for all 102 configurations tried
+  (deflated Sharpe 0.978).
+* **Multi-timeframe design works as intended:** combining six timeframes (5 minutes to 4 hours)
+  keeps half the edge at a third of the trading; a confidence filter cuts trading by 93%; together
+  they raise the edge per trade 1.8 to 2.7 times. Results are robust to the number of lags, the
+  training window and the filter level.
+* **Where the edge lives:** it grows with the spread (correlation 0.63 with each stock's spread),
+  so it is earned by whoever provides liquidity, not by whoever takes it. Passive execution is the
+  natural next test; these papers do not run it.
+* **A new result on a standard tool:** on bars, the Hasbrouck VAR's impact estimates are largely
+  arithmetic. A formula with no regression matches the estimated impact (correlation 0.9986 across
+  stocks), and one control removes 97% of the lagged coefficient.
+
+## Papers
+
+| Paper | Question | Main result |
 |---|---|---|
-| [1. What the Hasbrouck VAR measures on five-minute bars](paper/paper1.pdf) | Do bar-level order-flow regressions measure information? | Mostly arithmetic. With close prices the contemporaneous impact is predicted by a formula that uses no regression (correlation 0.9986 across stocks). With range-midpoint prices the lagged impact is a known term displaced by one bar: one control removes 97% of it. The two-step forecast built on the VAR is not identified. |
-| [2. A multi-timeframe ARX direction model](paper/paper2.pdf) | Is there a forecastable edge, and what is it? | Yes, small and steady. Hit rate 0.506, gross Sharpe 4.99 with next-open fills. It is a one-bar reversal: the flow proxy adds nothing, and the midpoint's 0.689 hit rate is an identity. Combining six timeframes keeps half the edge at a third of the trading. |
-| [3. From gross edge to net profit](paper/paper3.pdf) | Does it survive execution? | No. Filled at the signal bar's close, $1 million grows to $4,091,721 (Sharpe 9.01). The paper proves the gap between a close fill and a next-open fill equals position change times the jump between the two prints, and shows that jump is bid–ask bounce: it removes 46% of the gross edge. All 46 versions lose money at the smallest cost a market order can pay (half a $0.01 tick); the best out-of-sample version turns $1 million into $870,953 over 2022–2025. The edge grows with the spread: it belongs to whoever provides liquidity. |
+| [1. What the Hasbrouck VAR measures on five-minute bars](paper/paper1.pdf) | Do bar-level order-flow regressions measure information? | Mostly construction identities, with a short test that separates identity from information in any bar-level regression. The two-step forecast built on the VAR is not identified. |
+| [2. A multi-timeframe ARX direction model](paper/paper2.pdf) | Is there a forecastable edge, and what is it? | Yes: hit rate 0.506, gross Sharpe 4.99 with next-open fills. It is a one-bar reversal; the midpoint's 0.689 hit rate is an identity. |
+| [3. From gross edge to net profit](paper/paper3.pdf) | What does it take to trade it? | The paper proves the gap between a close fill and a next-open fill equals position change times the jump between the two prints (bid–ask bounce, 46% of the gross edge). With market orders paying at least half a $0.01 tick, the 46 versions tested do not break even; the best out-of-sample version turns $1 million into $870,953 over 2022–2025. The edge belongs to the liquidity provider. |
 
 The research log, step by step with what each step had to pass: [`docs/RESEARCH_LOG.md`](docs/RESEARCH_LOG.md).
 
