@@ -1,17 +1,22 @@
 # arx-mtf
 
-**A 5-minute direction model with a real, statistically robust edge on 431 S&P 500 stocks, and a
-precise account of what it takes to capture it.** Three papers on order flow, forecasting and
-trading costs, on 5-minute bars from December 2019 to January 2025. Every number in the papers is
-generated from the result files.
+**Why a Sharpe-9 intraday signal loses money.** A 5-minute model on 431 S&P 500 stocks has a real,
+steady forecasting edge (hit rate 0.506, gross Sharpe 4.99 with next-open fills, deflated Sharpe
+0.978 over 102 trials). The headline Sharpe of 9.01 is a fill assumption: Paper 3 proves 46% of the
+gross edge is bid–ask bounce, and every version loses money at the smallest cost a market order can
+pay. The papers show how to tell a real edge from an artifact, and that this one belongs to the
+liquidity provider. Data: 5-minute bars, December 2019 to January 2025. Every number in the papers
+is generated from the result files.
 
 ## Highlights
 
-* **Gross Sharpe 9.01:** filled at the signal bar's close, $1 million grows to $4,091,721 in 4.05
-  years with a worst drawdown of −2.2%.
-* **A steady, forecastable edge:** hit rate 0.506 and gross Sharpe 4.99 with next-open fills.
-* **Not a product of search:** the gross edge survives a correction for all 102 configurations tried
-  (deflated Sharpe 0.978).
+* **A real edge before costs:** hit rate 0.506 and gross Sharpe 4.99 with next-open fills. It
+  survives a correction for all 102 configurations tried (deflated Sharpe 0.978).
+* **The artifact, measured and proved:** filled at the signal bar's close, $1 million would grow to
+  $4,091,721 (Sharpe 9.01). That fill is not achievable; the gap to a next-open fill equals position
+  change times the jump between the two prints, and that jump is bid–ask bounce.
+* **Net of the smallest possible cost** (half a $0.01 tick), all 46 versions lose money; the best
+  out-of-sample version turns $1 million into $870,953 over 2022–2025.
 * **Multi-timeframe design works as intended:** combining six timeframes (5 minutes to 4 hours)
   keeps half the edge at a third of the trading; a confidence filter cuts trading by 93%; together
   they raise the edge per trade 1.8 to 2.7 times. Results are robust to the number of lags, the
@@ -30,6 +35,11 @@ generated from the result files.
 | [1. What the Hasbrouck VAR measures on five-minute bars](paper/paper1.pdf) | Do bar-level order-flow regressions measure information? | Mostly construction identities, with a short test that separates identity from information in any bar-level regression. The two-step forecast built on the VAR is not identified. |
 | [2. A multi-timeframe ARX direction model](paper/paper2.pdf) | Is there a forecastable edge, and what is it? | Yes: hit rate 0.506, gross Sharpe 4.99 with next-open fills. It is a one-bar reversal; the midpoint's 0.689 hit rate is an identity. |
 | [3. From gross edge to net profit](paper/paper3.pdf) | What does it take to trade it? | The paper proves the gap between a close fill and a next-open fill equals position change times the jump between the two prints (bid–ask bounce, 46% of the gross edge). With market orders paying at least half a $0.01 tick, the 46 versions tested do not break even; the best out-of-sample version turns $1 million into $870,953 over 2022–2025. The edge belongs to the liquidity provider. |
+
+**Limits stated in Paper 3:** costs are estimated from bars, not quotes; market impact is not
+charged, so the negative verdict is conservative; the sample holds stocks with data through 2025
+(survivorship), and the versions were chosen after earlier results on the same data, which the
+deflated Sharpe ratio corrects for.
 
 The research log, step by step with what each step had to pass: [`docs/RESEARCH_LOG.md`](docs/RESEARCH_LOG.md).
 
