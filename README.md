@@ -36,6 +36,20 @@ is generated from the result files.
 | [2. A multi-timeframe ARX direction model](paper/paper2.pdf) | Is there a forecastable edge, and what is it? | Yes: hit rate 0.506, gross Sharpe 4.99 with next-open fills. It is a one-bar reversal; the midpoint's 0.689 hit rate is an identity. |
 | [3. From gross edge to net profit](paper/paper3.pdf) | What does it take to trade it? | The paper proves the gap between a close fill and a next-open fill equals position change times the jump between the two prints (bid–ask bounce, 46% of the gross edge). With market orders paying at least half a $0.01 tick, the 46 versions tested do not break even; the best out-of-sample version turns $1 million into $870,953 over 2022–2025. The edge belongs to the liquidity provider. |
 
+## What the cost result establishes, and where the edge is usable
+
+* **The binding constraint is execution, not the forecast.** The filtered multi-timeframe book can pay at most
+  0.280 bps per unit of position change, including adverse selection, to break even, while a market order pays at least 0.47 bps at the median
+  stock. The forecast is not the problem; paying the spread is.
+* **The edge belongs to the liquidity provider.** Breakeven rises from 0.066 to 0.197 bps from the
+  tightest to the widest spread quintile. A trader who earns the spread instead of paying it is on
+  the right side of the same reversal.
+* **Usable as a signal, not only as a strategy.** A desk that already provides liquidity, or that
+  must trade these names anyway, can use the forecast to decide when and on which side to quote (an implication of the results, not
+  tested here).
+* **Next test (not yet run):** passive execution with limit orders, specified before the run, with
+  fills only when the price trades through the limit.
+
 **Limits stated in Paper 3:** costs are estimated from bars, not quotes; market impact is not
 charged, so the negative verdict is conservative; the sample holds stocks with data through 2025
 (survivorship), and the versions were chosen after earlier results on the same data, which the
