@@ -1,12 +1,28 @@
 # arx-mtf
 
-**Why a Sharpe-9 intraday signal loses money.** A 5-minute model on 431 S&P 500 stocks has a real,
-steady forecasting edge (hit rate 0.506, gross Sharpe 4.99 with next-open fills, deflated Sharpe
-0.978 over 102 trials). The headline Sharpe of 9.01 is a fill assumption: Paper 3 proves 46% of the
-gross edge is bid–ask bounce, and every version loses money at the smallest cost a market order can
-pay. The papers show how to tell a real edge from an artifact, and a follow-up test, specified before it
-ran, shows why limit orders cannot harvest it either. Data: 5-minute bars, December 2019 to January 2025. Every number in the papers
-is generated from the result files.
+**Multi-timeframe intraday direction forecasting on 431 S&P 500 stocks.** Three papers on 5-minute
+bars, December 2019 to January 2025. Every number in the papers is generated from the result files.
+
+**Why it is worth testing.** Short-horizon returns are not pure noise: they reverse over days and
+weeks, the first half hour of the day predicts the last, and order flow carries information that
+prices absorb over several trades. These effects work at different horizons, from minutes to hours,
+so a model that looks at one horizon sees only one of them. The idea: forecast the next bar's
+return at six horizons (5 minutes to 4 hours) with the same simple model, put the forecasts on a
+common scale and average them. If the horizons capture different effects, the average should keep
+most of the predictive content while trading less.
+
+**What the results support.**
+
+* **A real, steady forecasting edge:** hit rate 0.506 and gross Sharpe 4.99 with next-open fills,
+  robust to all 102 configurations tried (deflated Sharpe 0.978).
+* **Combining horizons works as intended:** the six-timeframe average keeps half the edge at a third
+  of the trading, and a confidence filter cuts trading by 93%. The results are robust to the number
+  of lags, the training window and the filter level.
+* **What the edge is:** a one-bar reversal. The bar-level order-flow proxy adds nothing, so that
+  part of the motivation is not supported on bar data.
+
+**However, the strategy is very sensitive to trading costs.** It breaks even at a half-spread of
+0.10–0.22 bps per unit traded, below the 0.47 bps a market order pays at the median stock.
 
 ## Results before costs
 
