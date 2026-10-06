@@ -168,6 +168,14 @@ hm = keys // 10000 >= C.LEARN_END
 V["EQM_lf_B"] = eq_month("cls|lw_filt", "B", per_mask=hm); V["EQM_lf_Bt"] = eq_month("cls|lw_filt", "B", "ctk", hm)
 V["EQM_lf_Ba"] = eq_month("cls|lw_filt", "B", "car", hm)
 
+# passive execution follow-up (docs/spec/passive_execution.md), primary configuration, hold-out
+PJ = json.load(open(os.path.join(R, "passive.json")))
+PM = pd.read_csv(os.path.join(R, "passive_metrics.csv"))
+pr = PM[(PM.cfg == PJ["primary"]["cfg"]) & (PM.period == "hold")].iloc[0]
+V.update(ps_fill=pct(pr.fill_rate, 0, False), ps_mf=n(pr.move_filled_bps, 1, True), ps_mu=n(pr.move_unfilled_bps, 1, True),
+         ps_sh=n(PJ["primary"]["sharpe_tick"], 1), ps_shB=n(M("cls|eq_filt", "hold", "B", "tick", "sharpe"), 1),
+         ps_rebate=n(-PJ["primary"]["breakeven_fee_bps"], 2))
+
 for i in (1, 2, 3):
     tp = os.path.join(C.PAPER, f"p{i}_template.tex")
     if not os.path.exists(tp):

@@ -75,7 +75,7 @@ best hold-out version (six timeframes, learned weights, confidence filter) turns
 |---|---|---|
 | [1. What the Hasbrouck VAR measures on five-minute bars](paper/paper1.pdf) | Do bar-level order-flow regressions measure information? | Mostly construction identities, with a short test that separates identity from information in any bar-level regression. The two-step forecast built on the VAR is not identified. |
 | [2. A multi-timeframe ARX direction model](paper/paper2.pdf) | Is there a forecastable edge, and what is it? | Yes: hit rate 0.506, gross Sharpe 4.99 with next-open fills. It is a one-bar reversal; the midpoint's 0.689 hit rate is an identity. |
-| [3. From gross edge to net profit](paper/paper3.pdf) | What does it take to trade it? | The paper proves the gap between a close fill and a next-open fill equals position change times the jump between the two prints (bid–ask bounce, 46% of the gross edge). With market orders paying at least half a $0.01 tick, the 46 versions tested do not break even; the best out-of-sample version turns $1 million into $870,953 over 2022–2025. The gross edge rises with the spread. |
+| [3. From gross edge to net profit](paper/paper3.pdf) | What does it take to trade it? | The paper proves the gap between a close fill and a next-open fill equals position change times the jump between the two prints (bid–ask bounce, 46% of the gross edge). With market orders paying at least half a $0.01 tick, the 46 versions tested do not break even; the best out-of-sample version turns $1 million into $870,953 over 2022–2025. The gross edge rises with the spread, and a follow-up test shows resting limit orders do not collect it (adverse selection). |
 
 ## What the cost results establish
 

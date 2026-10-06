@@ -34,8 +34,8 @@ measure trading costs per stock and per day from the bars themselves, including 
 market order can pay less than half a \$0.01 tick. Third, we test whether trading less, trading
 tight-spread stocks, or combining timeframes rescues the strategy. It does not. Every one of the
 46 versions tested loses money at the lower-bound cost; the best out-of-sample version turns \$1
-million into \$870{,}953 over 2022--2025. The edge grows with the spread and is earned by whoever
-provides liquidity, not by whoever takes it.
+million into \$870{,}953 over 2022--2025. The edge grows with the spread, but a follow-up test shows that
+limit orders resting at the last price do not collect it: their fills are adversely selected.
 \end{abstract}
 
 %=====================================================================
@@ -482,6 +482,16 @@ measured without quote and order-book data, so we do not claim that a passive ve
 profitable. What the analysis does show is the size of the target: the book can afford to pay
 at most $0.280$ bps per unit of position change, including adverse selection, to break even, while a market
 order pays at least $0.47$ bps at the median stock.
+
+\paragraph{A follow-up test on the same bars.} After this analysis we ran the simplest passive version,
+under a specification fixed before the run and kept in the repository (\texttt{docs/spec}).
+Each order rests at the signal bar's close and fills, at that price, only if the next bar trades strictly
+through it; unfilled orders are cancelled. For the filtered book in 2022--2025, $83\%$ of orders fill,
+the price moves $-4.6$ bps against an order over the bar in which it fills and $+25.3$ bps in its
+favour over the bar in which it does not, and the net Sharpe ratio falls to $-15.1$, against $-2.3$
+with market orders at the tick floor. Breaking even would need a rebate of $3.47$ bps per unit
+traded. On these bars, resting at the last price does not collect the spread; whether better queue
+position or faster cancellation would is a question for order-book data.
 
 %=====================================================================
 \section{Limitations}

@@ -205,3 +205,12 @@ orders instead of market orders, keep it?
 * Correction: the README had said the edge "belongs to the liquidity provider" and could be used to
   decide where to quote. This test does not support that for a resting order at the last price; both
   statements were replaced.
+
+## S7 - papers brought in line with S6 (2026-10-06)
+
+* Paper 3: the abstract no longer says the edge "is earned by whoever provides liquidity"; Section 6
+  gains a paragraph reporting the passive test, with every number generated from `results/passive.json`.
+* Paper 2: the sentence saying limit orders "can earn" the bounce now says resting limit orders fail to
+  collect it.
+* `run_all.py` runs the passive stages before `make_papers.py`. Paper 1 is byte-identical; papers 2 and 3
+  keep 9 pages and compile without warnings.
