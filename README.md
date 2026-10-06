@@ -8,6 +8,30 @@ pay. The papers show how to tell a real edge from an artifact, and a follow-up t
 ran, shows why limit orders cannot harvest it either. Data: 5-minute bars, December 2019 to January 2025. Every number in the papers
 is generated from the result files.
 
+## Results before costs
+
+<!-- GROSS:START -->
+| Strategy | Period | $1M grows to | CAGR | Sharpe | Max drawdown | Months positive | Breakeven half-spread (bps) |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 5-minute model | Hold-out 2022–2025, 3.01 yrs | $1,756,488 | +20.6% | 4.65 | -2.6% | 92% | 0.10 |
+| 5-minute model | Full sample, 4.05 yrs | $2,141,607 | +20.7% | 4.99 | -2.6% | 92% | 0.10 |
+| Six timeframes, equal weights | Hold-out 2022–2025, 3.01 yrs | $1,349,527 | +10.5% | 3.18 | -2.3% | 84% | 0.16 |
+| Six timeframes, equal weights | Full sample, 4.05 yrs | $1,552,316 | +11.5% | 3.61 | -2.3% | 84% | 0.18 |
+| Six timeframes, equal weights, confidence filter | Hold-out 2022–2025, 3.01 yrs | $1,073,071 | +2.4% | 0.80 | -4.1% | 62% | 0.17 |
+| Six timeframes, equal weights, confidence filter | Full sample, 4.05 yrs | $1,160,997 | +3.8% | 1.32 | -4.1% | 62% | 0.28 |
+| Six timeframes, learned weights, confidence filter | Hold-out 2022–2025, 3.01 yrs | $1,069,992 | +2.3% | 0.81 | -3.8% | 68% | 0.22 |
+| Six timeframes, learned weights, confidence filter | Full sample, 4.05 yrs (weights learned in this period) | $1,127,976 | +3.0% | 1.12 | -3.8% | 68% | 0.31 |
+
+Before trading costs, with next-open fills (the first price available after each decision); equal-weight
+book of 431 stocks, positions closed at every session end.
+
+**But the strategy is very sensitive to transaction costs.** It breaks even at a half-spread of
+0.10–0.22 bps per unit traded (hold-out). A market order pays at least half a $0.01 tick,
+0.47 bps at the median stock, so net of that smallest possible cost every version loses money; the
+best hold-out version (six timeframes, learned weights, confidence filter) turns $1M into $870,953. Limit orders do not help
+([`docs/PASSIVE_RESULTS.md`](docs/PASSIVE_RESULTS.md)).
+<!-- GROSS:END -->
+
 ## Highlights
 
 * **A real edge before costs:** hit rate 0.506 and gross Sharpe 4.99 with next-open fills. It
