@@ -4,8 +4,8 @@
 steady forecasting edge (hit rate 0.506, gross Sharpe 4.99 with next-open fills, deflated Sharpe
 0.978 over 102 trials). The headline Sharpe of 9.01 is a fill assumption: Paper 3 proves 46% of the
 gross edge is bid–ask bounce, and every version loses money at the smallest cost a market order can
-pay. The papers show how to tell a real edge from an artifact, and that this one belongs to the
-liquidity provider. Data: 5-minute bars, December 2019 to January 2025. Every number in the papers
+pay. The papers show how to tell a real edge from an artifact, and a follow-up test, specified before it
+ran, shows why limit orders cannot harvest it either. Data: 5-minute bars, December 2019 to January 2025. Every number in the papers
 is generated from the result files.
 
 ## Highlights
@@ -21,9 +21,10 @@ is generated from the result files.
   keeps half the edge at a third of the trading; a confidence filter cuts trading by 93%; together
   they raise the edge per trade 1.8 to 2.7 times. Results are robust to the number of lags, the
   training window and the filter level.
-* **Where the edge lives:** it grows with the spread (correlation 0.63 with each stock's spread),
-  so it is earned by whoever provides liquidity, not by whoever takes it. Passive execution is the
-  natural next test; these papers do not run it.
+* **Passive execution, tested with a frozen specification:** posting limit orders instead of paying
+  the spread makes results worse, because fills are adversely selected. Filled orders see the price
+  move -4.6 bps against them; missed orders would have gained +25.3 bps
+  ([`docs/PASSIVE_RESULTS.md`](docs/PASSIVE_RESULTS.md)).
 * **A new result on a standard tool:** on bars, the Hasbrouck VAR's impact estimates are largely
   arithmetic. A formula with no regression matches the estimated impact (correlation 0.9986 across
   stocks), and one control removes 97% of the lagged coefficient.
@@ -34,21 +35,23 @@ is generated from the result files.
 |---|---|---|
 | [1. What the Hasbrouck VAR measures on five-minute bars](paper/paper1.pdf) | Do bar-level order-flow regressions measure information? | Mostly construction identities, with a short test that separates identity from information in any bar-level regression. The two-step forecast built on the VAR is not identified. |
 | [2. A multi-timeframe ARX direction model](paper/paper2.pdf) | Is there a forecastable edge, and what is it? | Yes: hit rate 0.506, gross Sharpe 4.99 with next-open fills. It is a one-bar reversal; the midpoint's 0.689 hit rate is an identity. |
-| [3. From gross edge to net profit](paper/paper3.pdf) | What does it take to trade it? | The paper proves the gap between a close fill and a next-open fill equals position change times the jump between the two prints (bid–ask bounce, 46% of the gross edge). With market orders paying at least half a $0.01 tick, the 46 versions tested do not break even; the best out-of-sample version turns $1 million into $870,953 over 2022–2025. The edge belongs to the liquidity provider. |
+| [3. From gross edge to net profit](paper/paper3.pdf) | What does it take to trade it? | The paper proves the gap between a close fill and a next-open fill equals position change times the jump between the two prints (bid–ask bounce, 46% of the gross edge). With market orders paying at least half a $0.01 tick, the 46 versions tested do not break even; the best out-of-sample version turns $1 million into $870,953 over 2022–2025. The gross edge rises with the spread. |
 
-## What the cost result establishes, and where the edge is usable
+## What the cost results establish
 
-* **The binding constraint is execution, not the forecast.** The filtered multi-timeframe book can pay at most
-  0.280 bps per unit of position change, including adverse selection, to break even, while a market order pays at least 0.47 bps at the median
-  stock. The forecast is not the problem; paying the spread is.
-* **The edge belongs to the liquidity provider.** Breakeven rises from 0.066 to 0.197 bps from the
-  tightest to the widest spread quintile. A trader who earns the spread instead of paying it is on
-  the right side of the same reversal.
-* **Usable as a signal, not only as a strategy.** A desk that already provides liquidity, or that
-  must trade these names anyway, can use the forecast to decide when and on which side to quote (an implication of the results, not
-  tested here).
-* **Next test (not yet run):** passive execution with limit orders, specified before the run, with
-  fills only when the price trades through the limit.
+* **Execution is the binding constraint.** The filtered multi-timeframe book can pay at most 0.280
+  bps per unit of position change, including adverse selection, to break even. A market order pays
+  at least 0.47 bps at the median stock.
+* **Providing liquidity does not rescue it.** In a passive execution test specified before it ran
+  ([spec](docs/spec/passive_execution.md), [results](docs/PASSIVE_RESULTS.md)), the same positions
+  are traded with limit orders at the last close that fill only when the price trades through them.
+  82.9% of orders fill, but a fill means the price moved against the forecast. The net Sharpe
+  ratio falls to -15.1 (95% interval [-17.1, -13.4]) in the hold-out. Breaking even would
+  need a rebate of 3.47 bps per unit traded, about $0.039 per share.
+* **What this says about the signal.** A one-bar reversal with a hit rate near 0.506 is real but
+  weaker than the information in whether a resting order gets filled. Paper 3 found the gross edge
+  rises with the spread; the passive test shows a resting order does not collect that spread on
+  this signal. Doing so would need queue position and cancellation speed, which bars cannot show.
 
 **Limits stated in Paper 3:** costs are estimated from bars, not quotes; market impact is not
 charged, so the negative verdict is conservative; the sample holds stocks with data through 2025

@@ -13,3 +13,5 @@ paper/*.fdb_latexmk
 paper/*.toc
 paper/values.json
 paper/main.*
+cache
+results/pertic

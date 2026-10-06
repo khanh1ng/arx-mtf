@@ -187,3 +187,21 @@ Fixed during evaluation: cramped example table, too few decimals for c coefficie
 * 10 quantities appear in more than one paper; each is one generated value, so they cannot disagree.
 * Each paper cites only keys present in refs.tex (the generator refuses unknown keys).
 * Page counts 11 / 9 / 9; all compile with no errors, overfull boxes or undefined references.
+
+## S6 - passive execution test (2026-10-06; procedure PASS, criteria FAIL)
+
+Question: Paper 3 found the gross edge rises with the spread. Can the same positions, traded with limit
+orders instead of market orders, keep it?
+
+* Specification written and committed before the simulator (`docs/spec/passive_execution.md`, commit
+  `1e5cdb3`): 4 position rules x 2 limit offsets, trade-through fill rule, primary configuration and
+  four acceptance criteria fixed in advance.
+* Consistency checks: the simulator reproduces the papers' next-open and close-fill P&L on all 431
+  stocks (max difference 2e-13 bps); look-ahead identical at 18 truncation points; the positive control
+  (an order rule that reads bar t+1) is detected 18 of 18 times.
+* Result (`docs/PASSIVE_RESULTS.md`, generated): every configuration is worse than with market orders.
+  Fills are adversely selected: about four in five orders fill, the price moves against filled orders
+  and in favour of missed ones. A1, A2 and A3 fail; A4 passes.
+* Correction: the README had said the edge "belongs to the liquidity provider" and could be used to
+  decide where to quote. This test does not support that for a resting order at the last price; both
+  statements were replaced.

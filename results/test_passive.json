@@ -1,0 +1,207 @@
+{
+ "cases": [
+  {
+   "tic": "AAPL",
+   "key": 202203150805,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "AAPL",
+   "key": 202203150950,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "AAPL",
+   "key": 202308010805,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "AAPL",
+   "key": 202308010950,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "AAPL",
+   "key": 202411150805,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "AAPL",
+   "key": 202411150950,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202203150805,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202203150950,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202308010805,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202308010950,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202411150805,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202411150950,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202203150805,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202203150950,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202308010805,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202308010950,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202411150805,
+   "orders_same": true,
+   "pnl_same": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202411150950,
+   "orders_same": true,
+   "pnl_same": true
+  }
+ ],
+ "control": [
+  {
+   "tic": "AAPL",
+   "key": 202203150805,
+   "detected": true
+  },
+  {
+   "tic": "AAPL",
+   "key": 202203150950,
+   "detected": true
+  },
+  {
+   "tic": "AAPL",
+   "key": 202308010805,
+   "detected": true
+  },
+  {
+   "tic": "AAPL",
+   "key": 202308010950,
+   "detected": true
+  },
+  {
+   "tic": "AAPL",
+   "key": 202411150805,
+   "detected": true
+  },
+  {
+   "tic": "AAPL",
+   "key": 202411150950,
+   "detected": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202203150805,
+   "detected": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202203150950,
+   "detected": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202308010805,
+   "detected": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202308010950,
+   "detected": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202411150805,
+   "detected": true
+  },
+  {
+   "tic": "JPM",
+   "key": 202411150950,
+   "detected": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202203150805,
+   "detected": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202203150950,
+   "detected": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202308010805,
+   "detected": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202308010950,
+   "detected": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202411150805,
+   "detected": true
+  },
+  {
+   "tic": "XOM",
+   "key": 202411150950,
+   "detected": true
+  }
+ ],
+ "pass": true,
+ "control_detected": 18,
+ "control_total": 18
+}

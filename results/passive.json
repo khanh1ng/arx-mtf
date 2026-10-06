@@ -1,0 +1,36 @@
+{
+ "checks": {
+  "open_max_abs_bps": 2.2737367544323206e-13,
+  "close_max_abs_bps": 0.0,
+  "stocks": 431
+ },
+ "primary": {
+  "cfg": "cls|eq_filt|k0",
+  "period": "hold",
+  "sharpe_tick": -15.066415382843608,
+  "ci95_sharpe_tick": [
+   -17.053005814617137,
+   -13.365030094094237
+  ],
+  "bps_ar": -0.2574235368281851,
+  "years": [
+   -5395.193648362431,
+   -4212.11237281776,
+   -4424.095162425204
+  ],
+  "deflated": {
+   "N": 110,
+   "prob": 0.0,
+   "expected_max_null": 64.56472206804716
+  },
+  "breakeven_fee_bps": -3.465157296966834,
+  "breakeven_fee_usd_per_share_at_median_price": -0.03918184035348486,
+  "median_price": 113.07377124779305
+ },
+ "criteria": {
+  "A1": false,
+  "A2": false,
+  "A3": false,
+  "A4_checks_1_2": true
+ }
+}
