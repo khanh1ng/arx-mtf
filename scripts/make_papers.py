@@ -176,6 +176,8 @@ V.update(ps_fill=pct(pr.fill_rate, 0, False), ps_mf=n(pr.move_filled_bps, 1, Tru
          ps_sh=n(PJ["primary"]["sharpe_tick"], 1), ps_shB=n(M("cls|eq_filt", "hold", "B", "tick", "sharpe"), 1),
          ps_rebate=n(-PJ["primary"]["breakeven_fee_bps"], 2))
 
+json.dump({k: v for k, v in V.items() if len(str(v)) < 200}, open(os.path.join(R, "paper_values.json"), "w"), indent=0, sort_keys=True)
+
 for i in (1, 2, 3):
     tp = os.path.join(C.PAPER, f"p{i}_template.tex")
     if not os.path.exists(tp):

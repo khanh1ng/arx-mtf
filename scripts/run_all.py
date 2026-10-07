@@ -5,8 +5,8 @@ STAGES = ["scripts/build_cache.py", "scripts/run_estimation.py", "scripts/run_si
           "scripts/run_portfolio.py", "scripts/run_metrics.py", "scripts/run_stats.py", "scripts/run_risk.py",
           "scripts/run_anatomy.py", "scripts/run_extra.py", "scripts/run_sensitivity.py",
           "tests/test_regression.py", "tests/test_lookahead.py",
-          "scripts/run_passive.py", "tests/test_passive.py", "scripts/report_passive.py", "scripts/report_readme.py",
-          "scripts/make_papers.py"]
+          "scripts/run_passive.py", "tests/test_passive.py", "scripts/report_passive.py",
+          "scripts/make_papers.py", "scripts/report_readme.py"]
 if __name__ == "__main__":
     skip = "--skip-cache" in sys.argv
     for st in STAGES:
