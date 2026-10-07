@@ -27,7 +27,7 @@ account of where an intraday edge comes from and what it would cost to capture i
 
 ## Results before costs
 
-| Strategy | Period | $1M grows to | CAGR | Sharpe [95% CI] | Max drawdown | Months positive | Breakeven (bps) |
+| Strategy | Period | $1M grows to | CAGR | Sharpe [95% CI] | Max drawdown | Months positive | Breakeven half-spread (bps per unit traded) |
 |---|---|---:|---:|---:|---:|---:|---:|
 | 5-minute model | Hold-out 2022–2025, 3.01 yrs | $1,756,488 | +20.6% | 4.65 [3.77, 5.82] | −2.6% | 92% | 0.10 |
 | 5-minute model | Full, 4.05 yrs | $2,141,607 | +20.7% | 4.99 [4.10, 5.97] | −2.6% | 92% | 0.10 |
@@ -38,8 +38,10 @@ account of where an intraday edge comes from and what it would cost to capture i
 | Six timeframes, learned weights, confidence filter | Hold-out 2022–2025, 3.01 yrs | $1,069,992 | +2.3% | 0.81 [−0.40, 1.97] | −3.8% | 68% | 0.22 |
 | Six timeframes, learned weights, confidence filter | Full, 4.05 yrs, weights learned here | $1,127,976 | +3.0% | 1.12 [0.13, 2.16] | −3.8% | 68% | 0.31 |
 
-Next-open fills, the first price available after each decision; equal-weight book of 431 stocks;
-positions closed at every session end. **Net of the smallest possible cost every version loses
+Before costs; next-open fills, the first price available after each decision; equal-weight book of
+431 stocks; positions closed at every session end. Sharpe ratios annualised from 5-minute returns
+(×√(78×252)); 95% intervals from a 20-day moving-block bootstrap. Breakeven is the half-spread at which
+net return is zero. **Net of the smallest possible cost every version loses
 money**; the best hold-out version turns $1M into $870,953.
 
 ## Mechanism: why the edge exists and why it cannot be captured

@@ -49,7 +49,7 @@ if __name__ == "__main__":
     be = [g(s, "hold", "0.0").breakeven for s, _ in STRATS]
     p = pj["primary"]
 
-    rows = ["| Strategy | Period | $1M grows to | CAGR | Sharpe [95% CI] | Max drawdown | Months positive | Breakeven (bps) |",
+    rows = ["| Strategy | Period | $1M grows to | CAGR | Sharpe [95% CI] | Max drawdown | Months positive | Breakeven half-spread (bps per unit traded) |",
             "|---|---|---:|---:|---:|---:|---:|---:|"]
     for s, label in STRATS:
         for per, plabel in (("hold", "Hold-out 2022–2025"), ("full", "Full")):
@@ -90,8 +90,10 @@ account of where an intraday edge comes from and what it would cost to capture i
 
 {table}
 
-Next-open fills, the first price available after each decision; equal-weight book of {V['nstocks']} stocks;
-positions closed at every session end. **Net of the smallest possible cost every version loses
+Before costs; next-open fills, the first price available after each decision; equal-weight book of
+{V['nstocks']} stocks; positions closed at every session end. Sharpe ratios annualised from 5-minute returns
+(×√(78×252)); 95% intervals from a 20-day moving-block bootstrap. Breakeven is the half-spread at which
+net return is zero. **Net of the smallest possible cost every version loses
 money**; the best hold-out version turns $1M into {V['plf_bt_end']}.
 
 ## Mechanism: why the edge exists and why it cannot be captured
