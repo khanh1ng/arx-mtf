@@ -69,12 +69,15 @@ stocks.** Three papers and a follow-up execution test on 5-minute bars; evaluati
 **Summary.** A walk-forward ARX model forecasts the next 5-minute return at six horizons, 5 minutes
 to 4 hours. Before costs the forecast has a statistically significant edge: hit rate {V['acc_cls']} and
 gross Sharpe {V['f_srB']} (95% CI {ci(sci('cls|5m', 'full'))}) with next-open fills, {g('cls|5m', 'hold', '0.0').sharpe:.2f} {ci(sci('cls|5m', 'hold'))} in the
-2022–2025 hold-out. The edge is a one-bar reversal, most of it bid–ask bounce. It breaks even at
+2022–2025 hold-out. The edge is a one-bar reversal that grows with the spread, the signature of bid–ask bounce. The book breaks even at
 {min(be):.2f}–{max(be):.2f} bps per unit traded, while the cheapest possible market order pays {V['tk_med']} bps at the
 median stock, and resting limit orders are adversely selected. The contribution is a measured
 account of where an intraday edge comes from and what it would cost to capture it.
 
 ## Hypotheses and verdicts
+
+The hypotheses follow the argument: H1–H3 establish whether an edge exists and what it is, H4–H6 test
+whether it can be traded, and H7 checks the order-flow tool the project started from.
 
 | | Hypothesis | Test | Evidence | Verdict |
 |---|---|---|---|---|
@@ -88,6 +91,8 @@ account of where an intraday edge comes from and what it would cost to capture i
 
 ## Results before costs
 
+The table gives the size of the edge that H1 and H3 test, before the costs that H5 and H6 apply.
+
 {table}
 
 Before costs; next-open fills, the first price available after each decision; equal-weight book of
@@ -97,6 +102,9 @@ net return is zero. **Net of the smallest possible cost every version loses
 money**; the best hold-out version turns $1M into {V['plf_bt_end']}.
 
 ## Mechanism: why the edge exists and why it cannot be captured
+
+Three measured facts explain the verdicts: where the Sharpe ratio comes from, what the reversal is, and
+which limit orders get filled.
 
 * **The Sharpe ratio comes from breadth, not accuracy.** The information coefficient is {V['ic']} and a
   single stock's Sharpe ratio is {V['sr_stock']}. With average pairwise correlation {V['rho']} the book holds
@@ -112,6 +120,9 @@ money**; the best hold-out version turns $1M into {V['plf_bt_end']}.
 
 ## Threats to validity
 
+Each threat below could produce a false edge or a false loss. The table states how the design rules each
+out and what remains open.
+
 | Threat | How it is handled | What remains |
 |---|---|---|
 | Look-ahead | Truncation-invariance tests on signals ({tl['truncation_ok']} of {tl['truncation']} cuts) and on execution ({len(tp['cases'])} cuts), each with a positive control (signals: {'caught' if tl['control_caught'] else '**missed**'}; execution: {tp['control_detected']} of {tp['control_total']}) | None known |
@@ -122,6 +133,8 @@ money**; the best hold-out version turns $1M into {V['plf_bt_end']}.
 | Survivorship | Not handled | Stocks with data through 2025 only |
 
 ## Implications
+
+The results change how a high-turnover backtest should be judged and state what a tradable version would need.
 
 * **For research:** judge a high-turnover strategy by its breakeven cost, not its Sharpe ratio; fill at
   the first print after the signal; and check any bar-level regression for construction identities.

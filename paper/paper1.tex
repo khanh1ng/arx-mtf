@@ -24,7 +24,7 @@
 
 \begin{abstract}
 \noindent The vector autoregression of \citet{hasbrouck1991} is the standard tool for measuring how much
-information trades carry. It needs signed trades, which are expensive; OHLCV bars are free, so it is
+information trades carry. The VAR needs signed trades, which are expensive; OHLCV bars are free, so it is
 tempting to run the same regressions on bars, with the bar's direction $\operatorname{sign}(C_t-O_t)$ as
 the trade sign. We do this for 431 S\&P~500 stocks on 5-minute bars, 2019--2025. The estimates
 look like textbook evidence of information in trades: contemporaneous impact is significant in every
@@ -74,7 +74,7 @@ is it information or is it a property of how the bar was built?
 \item \textbf{The contemporaneous impact with close prices is a formula.} It is large ($12.25$ bps
 per unit of flow) and significant in every stock. But because the trade sign is the sign of the bar's
 own open-to-close return, the coefficient is almost exactly
-$\E|oc_t|/\operatorname{Var}(x_t)$. This formula, which uses no regression, gives $12.33$ bps; the
+$\E|oc_t|/\operatorname{Var}(x_t)$. The formula, which uses no regression, gives $12.33$ bps; the
 two correlate $0.9986$ across stocks.
 \item \textbf{The lagged impact with midpoint prices is a displaced identity.} With the range midpoint
 as the price, impact appears to carry into the next bar ($b_1=$ $4.79$ bps, significant in
@@ -102,6 +102,9 @@ them into a test for bar-level research, and Section~\ref{sec:limits} lists the 
 %=====================================================================
 \section{Background}
 \label{sec:background}
+
+Two channels make prices respond to trades, and the Hasbrouck VAR is designed to separate them. Both are needed to read the estimates of Section~\ref{sec:est}.
+
 
 \subsection{Two reasons prices respond to trades}
 
@@ -138,8 +141,7 @@ and its sum is the permanent impact.
 The sign of a trade is usually inferred by comparing its price with the prevailing quotes, with the
 previous trade price as a fallback \citep{lee1991}. Without trades or quotes, a common substitute is the
 direction of a bar, $x_t = \operatorname{sign}(C_t-O_t)$: a bar that closes above its open is taken as
-buying pressure. The price can be the close $C_t$ or the midpoint of the range $(H_t+L_t)/2$, which looks
-like a quote midpoint. It is not one. A quote midpoint is a price at one moment; the range midpoint is an
+buying pressure. The price can be the close $C_t$ or the midpoint of the range $(H_t+L_t)/2$, which looks like a quote midpoint. The range midpoint is not a quote midpoint. A quote midpoint is a price at one moment; the range midpoint is an
 average over the bar. \citet{working1960} shows that changes of averaged prices are positively
 autocorrelated even when the underlying price is a random walk. Section~\ref{sec:b1} shows how this
 matters.
@@ -147,6 +149,9 @@ matters.
 %=====================================================================
 \section{Data and estimation choices}
 \label{sec:data}
+
+Every estimate below depends on how the bars are cleaned and how the regressions are summarised across stocks, so each choice is stated with its reason.
+
 
 \paragraph{Data.} 431 S\&P~500 stocks with 5-minute regular-hours bars from Interactive Brokers for
 the whole period, 2019-12-09 to 2025-01-10, 78 bars per session; on average 91{,}050 usable bars per
@@ -189,6 +194,9 @@ forecastable, otherwise the VAR adds nothing to forecasting.
 %=====================================================================
 \section{Estimates}
 \label{sec:est}
+
+The estimates are first reported as a standard study would report them. Sections~\ref{sec:b0} and~\ref{sec:b1} then show what produces them.
+
 
 \begin{table}[htbp]
 \centering
@@ -301,6 +309,9 @@ unchanged: large $b_1$ with MID, none with CLOSE.
 \section{The CLOSE $b_0$ is a regression of a return on its own sign}
 \label{sec:b0}
 
+The contemporaneous impact with close prices is the first identity: the regression recovers a property of the bar's own return, not of trading.
+
+
 With CLOSE prices, $r_t = 10^4(\log C_t - \log C_{t-1})$. Within a session the open of bar $t$ is almost
 the close of bar $t-1$, so $r_t$ is almost the bar's own open-to-close return $oc_t = 10^4\log(C_t/O_t)$.
 And $x_t$ is, by definition, the sign of $oc_t$.
@@ -356,7 +367,7 @@ average size of a 5-minute move, not the information in a trade.
 \label{sec:b1}
 
 An identity within a bar cannot, one would think, explain a coefficient that links one bar's flow to
-the next bar's return. It can, if the price is an average over the bar.
+the next bar's return. An identity can explain such a coefficient if the price is an average over the bar.
 
 \subsection{The decomposition}
 
@@ -366,8 +377,7 @@ r^{\mathrm{mid}}_{t+1} = \underbrace{10^4\big(\log \mathrm{mid}_{t+1}-\log C_t\b
 + \underbrace{10^4\big(\log C_t-\log \mathrm{mid}_t\big)}_{\mathrm{cl}_t,\ \text{known at the close of bar } t}.
 \label{eq:decomp}
 \end{equation}
-The equation is exact. The second term, the close-location term $\mathrm{cl}_t$, depends only on bar $t$.
-It is positive when the bar closes in the upper half of its range. A bar that closes above its open
+The equation is exact. The second term, the close-location term $\mathrm{cl}_t$, depends only on bar $t$. The term is positive when the bar closes in the upper half of its range. A bar that closes above its open
 usually closes in the upper half of its range, so $\mathrm{cl}_t$ and $x_t$ are strongly correlated
 ($0.567$ on average). A regression of $r^{\mathrm{mid}}_{t+1}$ on $x_t$ therefore finds a positive
 coefficient even if the first term, the only part that is about the future, is unrelated to $x_t$.
@@ -501,8 +511,7 @@ bar should do.
 
 \subsection{What survives}
 
-After the control, $b_1$ is $0.128$ bps and significant in $38\%$ of stocks, almost always
-positive. This is a genuine but small carry-over of impact into the next bar, $37$ times smaller
+After the control, $b_1$ is $0.128$ bps and significant in $38\%$ of stocks, almost always positive. The remaining coefficient is a genuine but small carry-over of impact into the next bar, $37$ times smaller
 than the raw coefficient, and $3.7$ times smaller than the smallest cost of a single trade
 (half of one \$0.01 tick at the median stock price).
 
@@ -543,13 +552,11 @@ same numbers.
 
 \paragraph{What software reports.} Statistical software does not refuse a singular design; it returns
 the minimum-norm solution of the pseudo-inverse and a standard error computed from it. In our runs this
-``$\delta$'' is positive in $91.5\%$ of refits and has $|t|>2$ in $44\%$. These numbers describe the
-pseudo-inverse, not the data. A reader who sees them cannot tell that $\delta$ does not exist.
+``$\delta$'' is positive in $91.5\%$ of refits and has $|t|>2$ in $44\%$. The reported $\delta$ and its $t$-statistics describe the pseudo-inverse, not the data. A reader who sees them cannot tell that $\delta$ does not exist.
 
 \paragraph{A version that is identified.} If Step A uses information that Step B does not have, here five
-lags of log volume and of the bar's range, $\hat x$ leaves the column space and $\delta$ can be estimated.
-It is then clearly positive (mean $21.9$, positive in $98\%$ of refits, $|t|>2$ in $83\%$):
-expected order flow does move expected returns. It still does not help forecasting, because $\delta$
+lags of log volume and of the bar's range, $\hat x$ leaves the column space and $\delta$ can be estimated. The coefficient $\delta$ is then clearly positive (mean $21.9$, positive in $98\%$ of refits, $|t|>2$ in $83\%$):
+expected order flow does move expected returns. The extra term still does not help forecasting, because $\delta$
 multiplies $\hat x$, whose standard deviation is only about $\sqrt{R^2}=$ $0.020$ of that of $x$. A
 coefficient can be real and precisely estimated and still move the forecast by almost nothing.
 
@@ -581,6 +588,9 @@ assets, survives robust standard errors and out-of-sample tests, and raises $R^2
 \section{Limitations}
 \label{sec:limits}
 
+The results rest on bar data, one market and one period; each limit below states what that excludes.
+
+
 \paragraph{No trade data.} The paper shows what the bar version measures; it cannot show what the
 trade-level version would find on the same stocks. The natural next step is to sign trades with
 \citet{lee1991} and run \eqref{eq:price}--\eqref{eq:flow} on trade time.
@@ -588,8 +598,7 @@ trade-level version would find on the same stocks. The natural next step is to s
 \paragraph{One frequency and one market.} Everything is 5-minute US large caps. The identities do not
 depend on the frequency, but the size of the residual effect in Section~\ref{sec:b1} does.
 
-\paragraph{Survivorship.} The sample contains stocks with data for the whole period. This is unlikely
-to affect the identities, which hold bar by bar, but the averages describe surviving large caps.
+\paragraph{Survivorship.} The sample contains stocks with data for the whole period. Survivorship is unlikely to affect the identities, which hold bar by bar, but the averages describe surviving large caps.
 
 %=====================================================================
 \section{Conclusion}

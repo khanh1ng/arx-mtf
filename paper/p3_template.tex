@@ -26,13 +26,13 @@
 \begin{abstract}
 \noindent A 5-minute direction model on @@nstocks@@ S\&P~500 stocks has a steady gross edge: filled at the
 close of the bar that produced the signal, \$1 million grows to @@p5_ag_end@@ in @@years@@ years with a
-Sharpe ratio of @@f_srA@@ and a worst drawdown of @@p5_ag_mdd@@. This paper asks how much of that survives
+Sharpe ratio of @@f_srA@@ and a worst drawdown of @@p5_ag_mdd@@. The present paper asks how much of that survives
 execution. We make three contributions. First, we prove that the difference between filling at the
 signal bar's close and at the next bar's open equals position change times the jump between the two
 prints, and show that this jump is bid--ask bounce: it removes @@dec_share@@ of the gross edge. Second, we
 measure trading costs per stock and per day from the bars themselves, including an exact lower bound: no
 market order can pay less than half a \$0.01 tick. Third, we test whether trading less, trading
-tight-spread stocks, or combining timeframes rescues the strategy. It does not. Every one of the
+tight-spread stocks, or combining timeframes rescues the strategy. None of the three does. Every one of the
 @@n_here@@ versions tested loses money at the lower-bound cost; the best out-of-sample version turns \$1
 million into @@plf_bt_end@@ over 2022--2025. The edge grows with the spread, but a follow-up test shows that
 limit orders resting at the last price do not collect it: their fills are adversely selected.
@@ -80,6 +80,9 @@ below zero; the gross edge survives a correction for @@n_all@@ trials (deflated 
 \section{The strategy in brief}
 \label{sec:strategy}
 
+The paper stands alone, so the strategy of the companion paper is summarised first.
+
+
 \paragraph{Forecast.} For each stock and each of six timeframes (5 minutes to 4 hours), a linear
 regression forecasts the next bar's close-to-close return from five lags of return and five lags of a
 bounded bar-level flow proxy, $\tanh(\operatorname{sign}(C-O)\cdot|C-O|/(H-L)\cdot\log(1+V))$. Each forecast
@@ -103,12 +106,14 @@ monthly refits; the flow coefficients are coin flips. The model is a one-bar rev
 \section{Fill timing}
 \label{sec:fill}
 
+A backtest must state the price at which each trade is filled. That choice alone changes the result by about half, so it is settled before costs are measured.
+
+
 \subsection{Three fill rules}
 
 A decision is made at the end of 5-minute bar $t$, with position $w_t$ held into bar $t+1$. We compare:
 \begin{itemize}
-\item \textbf{Close fill}: trade at $C_t$, the last price of the signal bar. Profit $w_t\,(C_t\to C_{t+1})$.
-This is the usual backtest convention.
+\item \textbf{Close fill}: trade at $C_t$, the last price of the signal bar. Profit $w_t\,(C_t\to C_{t+1})$. The close fill is the usual backtest convention.
 \item \textbf{Next-open fill}: trade at $O_{t+1}$, the first print after the signal, which is what a market
 order sent at the bar close receives. The old position $w_{t-1}$ is held from $C_t$ to $O_{t+1}$, the new
 one from $O_{t+1}$ to $C_{t+1}$.
@@ -165,6 +170,9 @@ matters. All results below use the next-open fill.
 \section{Trading costs}
 \label{sec:costs}
 
+Whether the gross edge survives depends on the cost of each unit traded, so costs are measured per stock and per day from data available before each day.
+
+
 \subsection{Net profit and breakeven}
 
 With half-spread $c$ (in bps) and turnover $|w_t-w_{t-1}|$, the net profit of a bar is
@@ -180,7 +188,7 @@ and per day from data before that day.
 
 \paragraph{Tick floor (exact lower bound).} Prices move in \$0.01 ticks, so the quoted spread is at least
 one tick and a market order pays at least half a tick: $c^{\text{tick}} = 0.005/P\times10^4$ bps, with $P$
-the previous session's close. This is not an estimate. If a strategy loses money at this cost, it loses
+the previous session's close. The tick floor is not an estimate. If a strategy loses money at this cost, it loses
 money at every real cost.
 
 \paragraph{Abdi--Ranaldo (central estimate).} \citet{abdi2017} note that the distance between the close
@@ -215,12 +223,14 @@ Measure & 10\% & 25\% & Median & 75\% & 90\% \\
 The Abdi--Ranaldo median of @@ar_med@@ bps is a few times the tick floor, which is plausible. The
 Corwin--Schultz median of @@cs_med@@ bps is too high for stocks this liquid; its largest values are for the
 most volatile names (@@cs_top@@), consistent with its volatility bias. We therefore base the verdict on
-the tick floor, use Abdi--Ranaldo as the central case, and report Corwin--Schultz only as an upper
-estimate. This rule was fixed before the cost results were seen.
+the tick floor, use Abdi--Ranaldo as the central case, and report Corwin--Schultz only as an upper estimate. The rule was fixed before the cost results were seen.
 
 %=====================================================================
 \section{Results}
 \label{sec:results}
+
+The results test the possible rescues in turn: trading tight-spread stocks, trading less, and combining timeframes, followed by the statistical confidence in the loss.
+
 
 \subsection{The edge grows with the spread}
 
@@ -245,7 +255,7 @@ filtered book. Across stocks, breakeven correlates @@corr_be_ar@@ with the stock
 strongest where the spread is widest is harvesting the spread.
 
 \paragraph{Trading only cheap stocks does not help.} Under Abdi--Ranaldo costs the tightest quintile
-roughly breaks even (@@q1_ar_f@@ for CLOSE 5m). This is not credible: the same noisy estimate chooses the
+roughly breaks even (@@q1_ar_f@@ for CLOSE 5m). That near-breakeven is not credible: the same noisy estimate chooses the
 stocks and sets their cost, so stocks whose spread is under-estimated are chosen and then under-charged.
 At the tick floor, which has no estimation error, the same quintile returns @@q1_tk_f@@.
 
@@ -253,6 +263,9 @@ At the tick floor, which has no estimation error, the same quintile returns @@q1
 (@@beat_tk_ef@@ for the filtered book), and @@beat_ar_f@@ (@@beat_ar_ef@@) above their own Abdi--Ranaldo spread.
 
 \subsection{Performance in dollars}
+
+Dollar paths show the size of the fill and cost effects directly.
+
 
 \begin{center}
 \begin{tikzpicture}
@@ -313,7 +326,7 @@ Fill, cost & End value & Total & CAGR & Vol & Sharpe & Max DD & Mo.\ $>0$ \\
 
 \paragraph{CLOSE 5m.} Before costs the book is excellent: @@p5_ag_end@@ with the close fill, @@p5_bg_end@@
 with the next-open fill, and volatility of only @@p5_vol@@ because it is long about half the stocks and short
-the rest, so market moves cancel. It changes @@f_turn@@ units of position per bar. At the median tick floor
+the rest, so market moves cancel. The book changes @@f_turn@@ units of position per bar. At the median tick floor
 that alone costs about @@cost_turn_f@@ bps per bar, close to its whole gross return, and the book ends at
 @@p5_bt_end@@. A high Sharpe ratio and a near-total loss are both correct: many tiny bets, each costing
 more to place than it earns.
@@ -324,7 +337,7 @@ with learned weights (Table~\ref{tab:perfoos}) it ends at @@plf_bg_end@@ before 
 after the tick floor.
 
 \paragraph{MID 5m} uses the midpoint of the range as its price and loses money before any cost
-(@@pm5_bg_end@@ with the next-open fill). Its apparent accuracy comes from a known term in the midpoint
+(@@pm5_bg_end@@ with the next-open fill). MID's apparent accuracy comes from a known term in the midpoint
 return, not from information.
 
 \subsection{Statistical confidence}
@@ -408,16 +421,14 @@ conclusion holds. Interactive Brokers builds bars from filtered trades, so $C_t$
 on the consolidated tape; tick data would sharpen the fill-timing result.
 
 \paragraph{Exploratory, not a strategy.} Looking by time of day after the results were known, the filtered
-book's breakeven is highest late in the afternoon (@@tod_best@@ bps in @@tod_best_win@@). This was not a
-planned test and should be checked on new data before it is believed.
+book's breakeven is highest late in the afternoon (@@tod_best@@ bps in @@tod_best_win@@). The comparison was not a planned test and should be checked on new data before it is believed.
 
 %=====================================================================
 \section{What would make it tradable}
 \label{sec:tradable}
 
 The gross edge is real, but it is the spread. A trader who crosses the spread pays it; a trader who posts
-limit orders at the bid after a down bar and at the ask after an up bar would earn it. That is a different
-business. A resting order fills only when the market trades through it, and the orders that fill are
+limit orders at the bid after a down bar and at the ask after an up bar would earn it. Providing liquidity is a different business. A resting order fills only when the market trades through it, and the orders that fill are
 disproportionately the ones the market was about to move against (adverse selection); fills are
 uncertain, queue position matters, and exchange rebates and fees change the numbers. None of this can be
 measured without quote and order-book data, so we do not claim that a passive version would be
@@ -439,12 +450,14 @@ position or faster cancellation would is a question for order-book data.
 \section{Limitations}
 \label{sec:limits}
 
+The verdict rests on bar data and on spread charges alone; each limit below states which way it moves the result.
+
+
 \paragraph{Costs from bars, not quotes.} The tick floor is exact but is a lower bound; Abdi--Ranaldo and
 Corwin--Schultz are estimates with known biases. Quote data would replace them.
 
 \paragraph{No market impact.} Only the spread is charged. An equal-weight book in @@nstocks@@ stocks
-trading every five minutes would move prices at any meaningful size, so the true cost is higher. This
-makes the negative verdict conservative.
+trading every five minutes would move prices at any meaningful size, so the true cost is higher. Omitting impact therefore makes the negative verdict conservative.
 
 \paragraph{Selection.} The sample contains stocks with data through 2025. The set of versions was chosen
 after earlier results on the same data; the deflated Sharpe ratio corrects the gross result for this but a
@@ -455,8 +468,10 @@ fresh set of stocks would be cleaner.
 
 A 5-minute reversal signal with a Sharpe ratio of @@f_srA@@ in a standard backtest loses money for any
 trader who uses market orders. About half of its edge is the assumption of a fill at the signal bar's own
-close, which Proposition~\ref{prop:fill} shows is exactly the bounce of the next print. The rest is smaller
-than the smallest possible cost of a trade. The edge grows with the spread, combining timeframes and
+close: Proposition~\ref{prop:fill} shows that the gap between the two fills equals position change times the
+jump to the next print, and the measured jump is bid--ask bounce. The rest is smaller than the smallest
+possible cost of a trade, and resting limit orders at the last close, tested in a follow-up fixed in advance,
+do worse because their fills are adversely selected. The edge grows with the spread, combining timeframes and
 filtering improve the edge per trade @@c5_lo@@ to @@c5_hi@@ times but not enough, and trading only cheap stocks
 does not help once costs are measured without estimation error. The practical lessons are to fill at the
 first print after the signal, to charge costs per stock with an exact lower bound, and to judge a

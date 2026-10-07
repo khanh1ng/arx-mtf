@@ -8,12 +8,15 @@ stocks.** Three papers and a follow-up execution test on 5-minute bars; evaluati
 **Summary.** A walk-forward ARX model forecasts the next 5-minute return at six horizons, 5 minutes
 to 4 hours. Before costs the forecast has a statistically significant edge: hit rate 0.506 and
 gross Sharpe 4.99 (95% CI [4.10, 5.97]) with next-open fills, 4.65 [3.77, 5.82] in the
-2022–2025 hold-out. The edge is a one-bar reversal, most of it bid–ask bounce. It breaks even at
+2022–2025 hold-out. The edge is a one-bar reversal that grows with the spread, the signature of bid–ask bounce. The book breaks even at
 0.10–0.22 bps per unit traded, while the cheapest possible market order pays 0.47 bps at the
 median stock, and resting limit orders are adversely selected. The contribution is a measured
 account of where an intraday edge comes from and what it would cost to capture it.
 
 ## Hypotheses and verdicts
+
+The hypotheses follow the argument: H1–H3 establish whether an edge exists and what it is, H4–H6 test
+whether it can be traded, and H7 checks the order-flow tool the project started from.
 
 | | Hypothesis | Test | Evidence | Verdict |
 |---|---|---|---|---|
@@ -26,6 +29,8 @@ account of where an intraday edge comes from and what it would cost to capture i
 | H7 | A Hasbrouck VAR on bars measures information in trades | Closed-form identities against the estimates | A regression-free formula matches the impact coefficient (correlation 0.9986); one control removes 97% of the lagged impact | **Rejected** (mostly identity) |
 
 ## Results before costs
+
+The table gives the size of the edge that H1 and H3 test, before the costs that H5 and H6 apply.
 
 | Strategy | Period | $1M grows to | CAGR | Sharpe [95% CI] | Max drawdown | Months positive | Breakeven half-spread (bps per unit traded) |
 |---|---|---:|---:|---:|---:|---:|---:|
@@ -46,6 +51,9 @@ money**; the best hold-out version turns $1M into $870,953.
 
 ## Mechanism: why the edge exists and why it cannot be captured
 
+Three measured facts explain the verdicts: where the Sharpe ratio comes from, what the reversal is, and
+which limit orders get filled.
+
 * **The Sharpe ratio comes from breadth, not accuracy.** The information coefficient is 0.0108 and a
   single stock's Sharpe ratio is 0.78. With average pairwise correlation 0.025 the book holds
   about 36 independent bets, so the fundamental law predicts 4.70; the realised daily Sharpe
@@ -60,6 +68,9 @@ money**; the best hold-out version turns $1M into $870,953.
 
 ## Threats to validity
 
+Each threat below could produce a false edge or a false loss. The table states how the design rules each
+out and what remains open.
+
 | Threat | How it is handled | What remains |
 |---|---|---|
 | Look-ahead | Truncation-invariance tests on signals (18 of 18 cuts) and on execution (18 cuts), each with a positive control (signals: caught; execution: 18 of 18) | None known |
@@ -71,6 +82,8 @@ money**; the best hold-out version turns $1M into $870,953.
 
 ## Implications
 
+The results change how a high-turnover backtest should be judged and state what a tradable version would need.
+
 * **For research:** judge a high-turnover strategy by its breakeven cost, not its Sharpe ratio; fill at
   the first print after the signal; and check any bar-level regression for construction identities.
 * **For trading:** not tradable as specified. A version would need costs below its breakeven,
@@ -78,6 +91,8 @@ money**; the best hold-out version turns $1M into $870,953.
 <!-- TOP:END -->
 
 ## Papers
+
+The three papers develop the argument in the order of the hypotheses; the passive test extends Paper 3.
 
 | Paper | Question | Answer (hypotheses above) |
 |---|---|---|
@@ -89,6 +104,8 @@ money**; the best hold-out version turns $1M into $870,953.
 The research log, step by step with what each step had to pass: [`docs/RESEARCH_LOG.md`](docs/RESEARCH_LOG.md).
 
 ## Protocol (one for every trading result)
+
+One protocol produces every trading result, so results are comparable across papers and tests.
 
 * τ-bars (5m, 15m, 30m, 1h, 2h, 4h) are built inside each session. The first return of a session is
   measured from its open, so no overnight gap enters any series.
@@ -111,6 +128,8 @@ The research log, step by step with what each step had to pass: [`docs/RESEARCH_
 
 ## Layout
 
+Each stage of the study is one script, and every number in the papers and in this README is read from `results/`.
+
 ```
 arxmtf/        data (raw bars -> npz cache), estimation (Hasbrouck VAR, identities), signals (walk-forward ARX),
                costs (tick floor, Abdi-Ranaldo, Corwin-Schultz), backtest (three fills), passive (limit orders), portfolio, stats
@@ -123,6 +142,8 @@ docs/          research log, passive-execution specification and results
 ```
 
 ## Reproducing
+
+One command rebuilds every result, test and paper from the raw bars.
 
 The raw data are 5-minute bars from Interactive Brokers and are not redistributed. The layout
 expected is one folder per ticker containing `*.tsv.gz` files with columns

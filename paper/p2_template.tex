@@ -47,7 +47,7 @@ is summarised in Section~\ref{sec:discussion} and treated fully in a companion p
 weeks \citep{lehmann1990,jegadeesh1995}; within the day, the first half hour predicts the last
 \citep{gao2018}, and returns at the same time of day are correlated across days \citep{heston2010}. At
 the shortest horizons, order flow carries information that prices absorb over several trades
-\citep{kyle1985,hasbrouck1991}. These effects operate at different horizons, from minutes to hours. A
+\citep{kyle1985,hasbrouck1991}. Reversal, intraday trend and order-flow effects operate at different horizons, from minutes to hours. A
 model that looks at one horizon only sees one of them.
 
 \paragraph{The idea.} Forecast the next bar's return at several horizons with the same simple model, put
@@ -75,12 +75,15 @@ parameters (Sections~\ref{sec:mtf}--\ref{sec:sens}).
 \section{The model}
 \label{sec:model}
 
+The model must use only information available at the end of each bar and must be cheap enough to refit thousands of times. Each step below states the reason for its form.
+
+
 Every input at time $t$ is known at the end of bar $t$. Each step below states what is done and why.
 
 \paragraph{Step 1: returns.} $r_t = 10^4(\log p_t - \log p_{t-1})$, in basis points (bps), so that stocks
 with different prices can be pooled. Two prices are compared. CLOSE uses $p_t=C_t$. MID uses the midpoint
 of the bar's range, $p_t=(H_t+L_t)/2$, a common choice because it looks like a quote midpoint and is less
-noisy than the close. It is not a quote midpoint: it is an average over the bar, known only after the bar
+noisy than the close. The range midpoint is not a quote midpoint: it is an average over the bar, known only after the bar
 ends, and no order can be filled at it. Section~\ref{sec:mid} shows why this matters.
 
 \paragraph{Step 2: flow-pressure proxy.}
@@ -102,8 +105,7 @@ dominate a least-squares fit. The plain sign $\operatorname{sign}(C_t-O_t)$ is k
 \end{equation}
 The return lags capture momentum ($\beta_1>0$) or reversal ($\beta_1<0$); the flow lags capture price
 impact that arrives after the bar. The model is linear because the effects are small and noisy, and a
-linear model has few parameters and a closed-form fit that can be re-estimated thousands of times.
-This is also the forecasting form of the \citet{hasbrouck1991} VAR: substituting the VAR's flow
+linear model has few parameters and a closed-form fit that can be re-estimated thousands of times. The same regression is also the forecasting form of the \citet{hasbrouck1991} VAR: substituting the VAR's flow
 equation into its price equation gives a forecast linear in exactly these regressors. $L=5$ covers 25
 minutes at the 5-minute timeframe; Section~\ref{sec:sens} shows that 1, 3 or 10 lags give the same
 results.
@@ -122,7 +124,7 @@ positions. In practice the average $|s_t|$ is @@abs_s_lo@@--@@abs_s_hi@@ across 
 $|S_t|$ is @@abs_S@@, where $\tanh(z)\approx z$.
 
 \paragraph{Step 5: combine timeframes.} Steps 1--4 run on bars of 5m, 15m, 30m, 1h, 2h and 4h, built from
-the 5-minute bars within each session. These cover the horizons of the effects in the introduction:
+the 5-minute bars within each session. The six timeframes cover the horizons of the effects in the introduction:
 5--15 minutes for order flow and bounce, 30--60 minutes for intraday trend and reversal, 2--4 hours for
 the state of the day. At each 5-minute bar a timeframe contributes the score of its last \emph{finished}
 bar, so no partly formed bar is used. The combined score is
@@ -145,6 +147,9 @@ in Section~\ref{sec:sens}.
 %=====================================================================
 \section{Walk-forward protocol and look-ahead tests}
 \label{sec:protocol}
+
+A forecast is credible only if no step uses data a trader would not have had. The protocol below fixes what is known at each bar, and the tests check it.
+
 
 \paragraph{Data.} @@nstocks@@ S\&P~500 stocks with 5-minute regular-hours bars from Interactive Brokers for
 the whole period, 2019-12-09 to 2025-01-10.
@@ -196,13 +201,16 @@ only at session ends, where no decision is made, and missed this leak; cutting m
 \paragraph{Measures.} \emph{Hit rate}: the share of bars on which the sign of the position matches the sign
 of the next return. \emph{Gross return per bar}: the average book return in bps before costs.
 \emph{Turnover}: the average of $|w_t-w_{t-1}|$ per bar; a switch from long to short counts two.
-\emph{Breakeven half-spread}: gross return per bar divided by turnover. It is the largest cost per unit
+\emph{Breakeven half-spread}: gross return per bar divided by turnover. Breakeven is the largest cost per unit
 of position change at which the book still breaks even, and it is the number that decides whether a
 strategy can be traded; Sharpe ratio does not. Sharpe ratios are annualised with $78\times252$ bars.
 
 %=====================================================================
 \section{Results}
 \label{sec:results}
+
+The results answer, in order, which price gives a tradable forecast, how large the edge is, what the signal is and why it yields a high Sharpe ratio, and whether combining timeframes helps.
+
 
 \subsection{MID beats CLOSE only on its own target}
 \label{sec:mid}
@@ -254,8 +262,7 @@ Version & MID & CLOSE & OC & bps/bar & Sharpe & close & open & \% stocks \\
 
 The close model is right @@acc_cls@@ of the time, earns @@f_bpsB@@ bps per bar gross, and makes gross profit
 in most stocks; a 20-day moving-block bootstrap gives its gross Sharpe a 95\% interval of @@ci_f@@ (@@ci_fh@@ in the hold-out). Replacing the $\tanh$ proxy by the plain sign, training on the open-to-close return, or
-adding ridge shrinkage with decay weighting changes nothing of substance. That the proxy's magnitude
-terms add nothing is itself informative: they are built from the same bar as the sign and carry no
+adding ridge shrinkage with decay weighting changes nothing of substance. The proxy's magnitude terms therefore add nothing, which is informative: they are built from the same bar as the sign and carry no
 further information about the next bar.
 
 \subsection{What the signal is}
@@ -279,13 +286,12 @@ Regressor & Mean & \% positive \\
 Only one coefficient has a stable sign: the latest return, negative in @@beta_r0_neg@@ of refits. Every
 flow coefficient is positive in about half of the refits. The model is a one-bar reversal: it buys after a
 down bar and sells after an up bar. At five minutes much of such reversal is bid--ask bounce: a close
-printed at the bid is followed by prints nearer the middle of the spread \citep{roll1984}. This is the
-first sign that the edge may be hard to capture with market orders.
+printed at the bid is followed by prints nearer the middle of the spread \citep{roll1984}. Bounce is the first sign that the edge may be hard to capture with market orders.
 
 \subsection{Why a hit rate near one half gives a high Sharpe ratio}
 \label{sec:why}
 
-The model trades only the sign of its forecast. Its forecasts are tiny: the average $|s_t|=|\hat r_{t+1}|/\sigma_t$ is @@abs_s5@@, i.e.\ forecasts are about
+The model trades only the sign of its forecast. The forecasts are tiny: the average $|s_t|=|\hat r_{t+1}|/\sigma_t$ is @@abs_s5@@, i.e.\ forecasts are about
 @@abs_s5_pct@@ of one standard deviation, and useless as predictions of size. What matters is how often the sign is right and how
 large the move is when it is right or wrong. With hit rate $p$ and average absolute next returns
 $m_{\text{hit}}$ and $m_{\text{miss}}$,
@@ -325,6 +331,9 @@ say nothing about whether each bet covers its cost.
 
 \subsection{Combining timeframes}
 \label{sec:mtf}
+
+Combining timeframes is meant to keep the edge while trading less; the tables measure both effects.
+
 
 \begin{table}[htbp]
 \centering
@@ -465,6 +474,9 @@ The companion paper measures this with three cost models, spread buckets and con
 \section{Limitations}
 \label{sec:limits}
 
+The results rest on bar data and one sample of large stocks; each limit below states what that excludes.
+
+
 \paragraph{Bars instead of trades.} The flow proxy uses only OHLCV data; signed volume from trades and
 quotes \citep{lee1991} could carry information that the proxy cannot.
 
@@ -479,7 +491,8 @@ not tested it.
 %=====================================================================
 \section{Conclusion}
 
-A walk-forwarded multi-timeframe ARX on 5-minute bars has a small gross edge, significant in and out of sample. The edge
+A walk-forwarded multi-timeframe ARX on 5-minute bars has a small gross edge, significant in and out of sample for
+the 5-minute and equal-weight books but not for the filtered books out of sample. The edge
 is a one-bar reversal, the flow proxy adds nothing, the midpoint price creates a false edge, and combining
 timeframes improves the edge per trade by trading less. The high Sharpe ratio comes from breadth, not
 accuracy. The binding constraint is not the forecast but the cost of acting on it.
