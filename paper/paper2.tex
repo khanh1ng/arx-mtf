@@ -31,11 +31,11 @@ design choice is explained, the walk-forward is checked for look-ahead with a te
 catch a deliberate leak, and results are reported on returns a trade can earn. Four findings. First,
 using the midpoint of the bar's range instead of the close raises the hit rate from $0.506$ to
 $0.689$, but only on the midpoint itself; on tradable returns the midpoint model is right
-$49.0\%$ of the time. Second, the close model has a small, very steady gross edge: hit rate
-$0.506$, gross Sharpe $4.99$ when trades are filled at the next bar's open. Third, the edge is a
-one-bar reversal; the flow proxy adds nothing. Fourth, combining timeframes keeps half the edge at a
-third of the trading, and a confidence filter cuts trading by $93\%$; the results are robust to
-the number of lags, the training window and the filter level. Whether the edge survives trading costs
+$49.0\%$ of the time. Second, the close model has a small but statistically clear gross edge: hit rate $0.506$, gross
+Sharpe $4.99$ (95\% block-bootstrap interval $[4.10,\ 5.97]$) when trades are filled at the next bar's open,
+and $4.65$ ($[3.77,\ 5.82]$) in the 2022--2025 hold-out. Third, the edge is a one-bar reversal; the flow proxy
+adds nothing. Fourth, combining timeframes keeps half the edge at a third of the trading, and a
+confidence filter cuts trading by $93\%$, but the filtered books' hold-out intervals include zero. Whether the edge survives trading costs
 is summarised in Section~\ref{sec:discussion} and treated fully in a companion paper.
 \end{abstract}
 
@@ -259,7 +259,7 @@ CLOSE, ridge + decay & $0.436$ & $0.506$ & $0.504$ & $0.096$ & $5.14$ & $0.188$ 
 \end{table}
 
 The close model is right $0.506$ of the time, earns $0.098$ bps per bar gross, and makes gross profit
-in most stocks. Replacing the $\tanh$ proxy by the plain sign, training on the open-to-close return, or
+in most stocks; a 20-day moving-block bootstrap gives its gross Sharpe a 95\% interval of $[4.10,\ 5.97]$ ($[3.77,\ 5.82]$ in the hold-out). Replacing the $\tanh$ proxy by the plain sign, training on the open-to-close return, or
 adding ridge shrinkage with decay weighting changes nothing of substance. That the proxy's magnitude
 terms add nothing is itself informative: they are built from the same bar as the sign and carry no
 further information about the next bar.
@@ -432,7 +432,9 @@ Learned, filtered & $0.012$ & $0.81$ & $0.054$ & $0.563$ & $0.219$ & $68\%$ \\
 \paragraph{Combining works through turnover (Table~\ref{tab:combo}).} Equal weights keep $58\%$ of the
 5-minute gross return with $33\%$ of its turnover, so breakeven rises from $0.103$ to $0.182$
 bps. Sizing by score and the confidence filter reduce turnover further and raise breakeven to
-$0.280$ bps. The price is a lower gross Sharpe: a book that trades less takes fewer bets.
+$0.280$ bps. The price is a lower gross Sharpe: a book that trades less takes fewer bets. The
+equal-weight interval stays above zero ($[2.28,\ 4.44]$ in the hold-out); the filtered books' do not ($[-0.22,\ 2.02]$,
+$[-0.40,\ 1.97]$), so their higher breakeven comes with an edge indistinguishable from zero out of sample.
 
 \paragraph{Learned weights (Table~\ref{tab:w}).} Learning on 2021 puts most weight on 2h and 4h for
 the close model. Out of sample it raises the breakeven of the filtered book from $0.168$ to $0.219$ bps
@@ -545,7 +547,7 @@ not tested it.
 %=====================================================================
 \section{Conclusion}
 
-A carefully walk-forwarded multi-timeframe ARX on 5-minute bars has a small, steady gross edge. The edge
+A walk-forwarded multi-timeframe ARX on 5-minute bars has a small gross edge, significant in and out of sample. The edge
 is a one-bar reversal, the flow proxy adds nothing, the midpoint price creates a false edge, and combining
 timeframes improves the edge per trade by trading less. The high Sharpe ratio comes from breadth, not
 accuracy. The binding constraint is not the forecast but the cost of acting on it.

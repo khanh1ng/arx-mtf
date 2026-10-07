@@ -168,6 +168,12 @@ hm = keys // 10000 >= C.LEARN_END
 V["EQM_lf_B"] = eq_month("cls|lw_filt", "B", per_mask=hm); V["EQM_lf_Bt"] = eq_month("cls|lw_filt", "B", "ctk", hm)
 V["EQM_lf_Ba"] = eq_month("cls|lw_filt", "B", "car", hm)
 
+# bootstrap intervals quoted in paper 2 (same source as paper 3: results/stats.json)
+for k, key in (("f", "cls|5m|B|full"), ("fh", "cls|5m|B|hold"), ("es", "cls|eq_sign|B|full"), ("esh", "cls|eq_sign|B|hold"),
+               ("ef", "cls|eq_filt|B|full"), ("efh", "cls|eq_filt|B|hold"), ("lfh", "cls|lw_filt|B|hold")):
+    V[f"ci_{k}"] = MP.ci(key, "gross_sharpe")
+V["fh_srB"] = n(M("cls|5m", "hold", "B", "0.0", "sharpe"), 2)
+
 # passive execution follow-up (docs/spec/passive_execution.md), primary configuration, hold-out
 PJ = json.load(open(os.path.join(R, "passive.json")))
 PM = pd.read_csv(os.path.join(R, "passive_metrics.csv"))
